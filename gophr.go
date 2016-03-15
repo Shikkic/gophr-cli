@@ -32,7 +32,7 @@ func main() {
 }
 
 /*
-	Print Deps Functions
+Print Deps Functions
 */
 
 func readFiles(goFiles []string) {
@@ -83,22 +83,27 @@ func readFile(goFilePath string) {
 	}
 }
 
-func printDeps(goFile string) {
-	importPackages := strings.Split(string(goFile), "\n")
-	fmt.Println("Go Dependecies for this package")
+func printDeps(depsArray string) {
+	importPackages := strings.Split(depsArray, "\n")
+	// include file name when listing dependencies
+	fmt.Println("Go Dependecies for")
 	for i := 0; i < len(importPackages); i++ {
 		depName := importPackages[i]
 		depName = strings.Replace(depName, string('"'), " ", 2)
 		depName = strings.Replace(depName, " ", "", 10)
 
-		if strings.Contains(depName, "github.com") {
+		if i == len(importPackages) {
+			// This is the last dependency
+			color.Green("└──" + depName)
+
+		} else if strings.Contains(depName, "github.com") {
 			color.Green("├─┬" + depName)
 		}
 	}
 }
 
 /*
-	Helper Functions
+Helper Functions
 */
 
 func check(e error) {
