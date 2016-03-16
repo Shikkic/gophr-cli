@@ -60,7 +60,6 @@ func readFile(goFilePath string) {
 		// TODO check the end :
 		if err != nil {
 			if err == io.EOF {
-				fmt.Println("EOF")
 				fileRef.Close()
 				break
 			}
@@ -78,8 +77,7 @@ func readFile(goFilePath string) {
 					} else {
 						isInImport = false
 						foundImportStatement = false
-						fmt.Println("not in important anymore")
-						printDeps(string(depsBuffer[:len(depsBuffer)]))
+						printDeps(string(depsBuffer[:len(depsBuffer)]), goFilePath)
 					}
 				} else {
 					if importCheckCount < 2 {
@@ -106,11 +104,12 @@ func readFile(goFilePath string) {
 	// printDeps
 }
 
-func printDeps(depsArray string) {
+func printDeps(depsArray string, goFilePath string) {
 	depsArray = strings.Trim(depsArray, "\n\t\x00 ")
 	importPackages := strings.Split(depsArray, "\n")
 	// include file name when listing dependencies
-	fmt.Println("Go Dependecies for")
+	fmt.Print("Go Dependecies for ")
+	color.Blue(goFilePath)
 	for i := 0; i < len(importPackages); i++ {
 		depName := importPackages[i]
 		depName = strings.Replace(depName, string('"'), " ", 2)
@@ -124,6 +123,7 @@ func printDeps(depsArray string) {
 			color.Green("├─┬" + depName)
 		}
 	}
+	fmt.Println("")
 }
 
 /*
