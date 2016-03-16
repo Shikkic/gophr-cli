@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"unicode"
 )
 
 // Define Constants
@@ -47,14 +46,18 @@ func readFile(goFilePath string) {
 	check(err)
 
 	importStringbuffer := make([]string, 7)
+	depsBuffer := make([]rune, 1)
+	var foundImportStatement bool = false
+	var isInImport bool = false
+	var importCheckCount int = 0
 
 	for {
 		// create 7 byte read buffer
 		readBuffer := make([]byte, bufferSize)
-		n1, err := fileRef.Read(readBuffer)
-		var _ = n1
+		_, err := fileRef.Read(readBuffer)
 
 		// TODO move this into function
+		// TODO check the end :
 		if err != nil {
 			if err == io.EOF {
 				fmt.Println("EOF")
@@ -67,36 +70,57 @@ func readFile(goFilePath string) {
 		// For each read buffer, parse and put it into
 		for _, token := range readBuffer {
 			token := rune(token)
-			if token != '\n' && !unicode.IsSpace(token) {
+
+			if foundImportStatement {
+				if isInImport {
+					if token != ')' {
+						depsBuffer = append(depsBuffer, token)
+					} else {
+						isInImport = false
+						foundImportStatement = false
+						fmt.Println("not in important anymore")
+						printDeps(string(depsBuffer[:len(depsBuffer)]))
+					}
+				} else {
+					if importCheckCount < 2 {
+						if token == '"' || token == '(' {
+							isInImport = true
+						}
+						importCheckCount++
+					} else {
+						foundImportStatement = false
+					}
+				}
+			} else {
 				// check if importStringBuffer == 'import'
 				if strings.Join(importStringbuffer[:], "") == "import" {
-					fmt.Println("Found keyword 'import'")
+					foundImportStatement = true
 				}
-
-				importStringbuffer = append(importStringbuffer[:1], importStringbuffer[1+1:]...)
-				importStringbuffer = append(importStringbuffer, string(token))
-
-				// Once found parse for deps
-				// TODO create an array of string dep arrays
 			}
+			importStringbuffer = append(importStringbuffer[:1], importStringbuffer[1+1:]...)
+			importStringbuffer = append(importStringbuffer, string(token))
 		}
 	}
+
+	// Once found parse for deps
+	// printDeps
 }
 
 func printDeps(depsArray string) {
+	depsArray = strings.Trim(depsArray, "\n\t\x00 ")
 	importPackages := strings.Split(depsArray, "\n")
 	// include file name when listing dependencies
 	fmt.Println("Go Dependecies for")
 	for i := 0; i < len(importPackages); i++ {
 		depName := importPackages[i]
 		depName = strings.Replace(depName, string('"'), " ", 2)
-		depName = strings.Replace(depName, " ", "", 10)
+		depName = strings.Replace(depName, "\t", "", 10)
 
-		if i == len(importPackages) {
+		if i == (len(importPackages) - 1) {
 			// This is the last dependency
 			color.Green("└──" + depName)
 
-		} else if strings.Contains(depName, "github.com") {
+		} else {
 			color.Green("├─┬" + depName)
 		}
 	}
