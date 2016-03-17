@@ -13,19 +13,51 @@ import (
 )
 
 // Define Constants
-const bufferSize = 7
+const readBufferSize = 7
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "gophr"
 	app.Usage = "A good go package manager"
-	// TODO create dep sub action
-	app.Action = func(c *cli.Context) {
-		// Retrieve the file names of all the go files in the current dir
-		fls, err := filepath.Glob("*.go")
-		check(err)
-		// Readfile
-		readFiles(fls)
+	// TODO Will need flags later
+	/*
+		app.Flags = []cli.Flag{
+			cli.StringFlag{
+				Name:  "deps",
+				Value: "list dependencies",
+				Usage: "list go dependencies in file(s)",
+			},
+		}
+	*/
+	app.Commands = []cli.Command{
+		{
+			Name:    "deps",
+			Aliases: []string{"dependencies"},
+			Usage:   "List dependencies of a go file or folder",
+			Action: func(c *cli.Context) {
+				fileName := c.Args().First()
+				fmt.Println("")
+
+				switch {
+				case len(fileName) != 0:
+					readFile(fileName)
+				default:
+					fls, err := filepath.Glob("*.go")
+					check(err)
+					readFiles(fls)
+				}
+			},
+		},
+		{
+			Name:    "install",
+			Aliases: []string{"install deps"},
+			Usage:   "Install dependency",
+			Action: func(c *cli.Context) {
+				// Determine if argument is passed in
+				// ...
+				//fileName := c.Args().First()
+			},
+		},
 	}
 	app.Run(os.Args)
 }
@@ -53,7 +85,7 @@ func readFile(goFilePath string) {
 
 	for {
 		// create 7 byte read buffer
-		readBuffer := make([]byte, bufferSize)
+		readBuffer := make([]byte, readBufferSize)
 		_, err := fileRef.Read(readBuffer)
 
 		// TODO move this into function
@@ -77,7 +109,6 @@ func readFile(goFilePath string) {
 					} else {
 						isInImport = false
 						foundImportStatement = false
-						printDeps(string(depsBuffer[:len(depsBuffer)]), goFilePath)
 					}
 				} else {
 					if importCheckCount < 2 {
@@ -90,7 +121,6 @@ func readFile(goFilePath string) {
 					}
 				}
 			} else {
-				// check if importStringBuffer == 'import'
 				if strings.Join(importStringbuffer[:], "") == "import" {
 					foundImportStatement = true
 				}
@@ -100,16 +130,16 @@ func readFile(goFilePath string) {
 		}
 	}
 
-	// Once found parse for deps
 	// printDeps
+	printDeps(string(depsBuffer[:len(depsBuffer)]), goFilePath)
 }
 
-func printDeps(depsArray string, goFilePath string) {
+func printDeps(depsArray string, goFileName string) {
 	depsArray = strings.Trim(depsArray, "\n\t\x00 ")
 	importPackages := strings.Split(depsArray, "\n")
-	// include file name when listing dependencies
+	// Clean up strings and remove non-github
 	fmt.Print("Go Dependecies for ")
-	color.Blue(goFilePath)
+	color.Blue(goFileName)
 	for i := 0; i < len(importPackages); i++ {
 		depName := importPackages[i]
 		depName = strings.Replace(depName, string('"'), " ", 2)
@@ -120,7 +150,11 @@ func printDeps(depsArray string, goFilePath string) {
 			color.Green("└──" + depName)
 
 		} else {
-			color.Green("├─┬" + depName)
+			if strings.Contains(depName, "github") {
+				color.Green("├─┬" + depName)
+			} else {
+				fmt.Println("├─┬" + depName)
+			}
 		}
 	}
 	fmt.Println("")
