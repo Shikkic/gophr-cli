@@ -1,15 +1,19 @@
 package main
 
 import (
+	//"bytes"
 	"fmt"
+	"github.com/briandowns/spinner"
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Define Constants
@@ -36,8 +40,7 @@ func main() {
 			Usage:   "List dependencies of a go file or folder",
 			Action: func(c *cli.Context) {
 				fileName := c.Args().First()
-				fmt.Println("")
-
+				// TODO check if deps are present in the go files AND if they're installed or not
 				switch {
 				case len(fileName) != 0:
 					readFile(fileName)
@@ -53,20 +56,56 @@ func main() {
 			Aliases: []string{"install deps"},
 			Usage:   "Install dependency",
 			Action: func(c *cli.Context) {
-				// Determine if argument is passed in
-				// ...
-				//fileName := c.Args().First()
+				// TODO consider tabbing
+				depName := c.Args().First()
+				runGoGetCommand(depName)
 			},
 		},
 	}
 	app.Run(os.Args)
 }
 
+func runGoGetCommand(depName string) {
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Start()
+
+	if len(depName) == 0 {
+		fls, err := filepath.Glob("*.go")
+		check(err)
+
+		if len(fls) == 0 {
+			red := color.New(color.FgRed).SprintFunc()
+			magenta := color.New(color.FgMagenta).SprintFunc()
+			s.Stop()
+			fmt.Printf("gophr %s %s not run in go a package\n", red("ERROR"), magenta("install"))
+			os.Exit(3)
+		} else {
+			depName = "./"
+		}
+	}
+
+	cmd := exec.Command("go", "get", depName)
+	//var out bytes.Buffer
+	//cmd.Stdout = &out
+	err := cmd.Run()
+	check(err)
+	s.Stop()
+	//fmt.Printf("%q", out.String())
+}
+
 /*
-Print Deps Functions
+ Deps Command Functions
 */
 
 func readFiles(goFiles []string) {
+	if len(goFiles) == 0 {
+		path, err := os.Getwd()
+		check(err)
+		fmt.Println(path)
+		fmt.Println("└── (empty)\n")
+		os.Exit(3)
+	}
+
 	for _, goFile := range goFiles {
 		readFile(goFile)
 	}
@@ -88,8 +127,6 @@ func readFile(goFilePath string) {
 		readBuffer := make([]byte, readBufferSize)
 		_, err := fileRef.Read(readBuffer)
 
-		// TODO move this into function
-		// TODO check the end :
 		if err != nil {
 			if err == io.EOF {
 				fileRef.Close()
@@ -125,12 +162,12 @@ func readFile(goFilePath string) {
 					foundImportStatement = true
 				}
 			}
+
 			importStringbuffer = append(importStringbuffer[:1], importStringbuffer[1+1:]...)
 			importStringbuffer = append(importStringbuffer, string(token))
 		}
 	}
 
-	// printDeps
 	printDeps(string(depsBuffer[:len(depsBuffer)]), goFilePath)
 }
 
@@ -147,8 +184,11 @@ func printDeps(depsArray string, goFileName string) {
 
 		if i == (len(importPackages) - 1) {
 			// This is the last dependency
-			color.Green("└──" + depName)
-
+			if strings.Contains(depName, "github") {
+				color.Green("└──" + depName)
+			} else {
+				fmt.Println("└──" + depName)
+			}
 		} else {
 			if strings.Contains(depName, "github") {
 				color.Green("├─┬" + depName)
@@ -159,6 +199,10 @@ func printDeps(depsArray string, goFileName string) {
 	}
 	fmt.Println("")
 }
+
+/*
+	Install Command Functions
+*/
 
 /*
 Helper Functions
