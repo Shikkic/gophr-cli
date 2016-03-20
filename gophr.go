@@ -168,6 +168,8 @@ func readFile(goFilePath string) {
 		}
 	}
 
+	// printDeps
+	// TODO Proably include some functions to clean up the depsBuffer for printing, to seperate concern
 	printDeps(string(depsBuffer[:len(depsBuffer)]), goFilePath)
 }
 
@@ -177,6 +179,7 @@ func printDeps(depsArray string, goFileName string) {
 	// Clean up strings and remove non-github
 	fmt.Print("Go Dependecies for ")
 	color.Blue(goFileName)
+
 	for i := 0; i < len(importPackages); i++ {
 		depName := importPackages[i]
 		depName = strings.Replace(depName, string('"'), " ", 2)
