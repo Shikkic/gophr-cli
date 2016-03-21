@@ -10,7 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
+	//"reflect"
+	//"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -40,7 +41,7 @@ func main() {
 			Usage:   "List dependencies of a go file or folder",
 			Action: func(c *cli.Context) {
 				fileName := c.Args().First()
-				// TODO check if deps are present in the go files AND if they're installed or not
+				// TODO FUNCTIONALITY check if deps are present in the go files AND if they're installed or not
 				switch {
 				case len(fileName) != 0:
 					readFile(fileName)
@@ -56,19 +57,40 @@ func main() {
 			Aliases: []string{"install deps"},
 			Usage:   "Install dependency",
 			Action: func(c *cli.Context) {
-				// TODO consider tabbing
-				depName := c.Args().First()
-				runGoGetCommand(depName)
+				var depName string
+				var fileName string
+
+				// TODO Consider using -a or --all flag to re-install all dependencies
+				if c.NArg() == 0 {
+					red := color.New(color.FgRed).SprintFunc()
+					magenta := color.New(color.FgMagenta).SprintFunc()
+					fmt.Printf("gophr %s %s not run with a package name\n", red("ERROR"), magenta("install"))
+					fmt.Printf("run %s for more help\n", magenta("gophr install -h"))
+					os.Exit(3)
+				}
+
+				if c.NArg() > 0 {
+					depName = c.Args()[0]
+				}
+
+				// TODO consider tabbing for arg if not present
+				if c.NArg() > 1 {
+					fileName = c.Args()[1]
+				}
+
+				runGoGetCommand(depName, fileName)
 			},
 		},
 	}
 	app.Run(os.Args)
 }
 
-func runGoGetCommand(depName string) {
+func runGoGetCommand(depName string, fileName string) {
+	fmt.Println(fileName)
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Start()
 
+	// Step 1 Determine if we need to download and install dependencies of the folder or for specified dependency
 	if len(depName) == 0 {
 		fls, err := filepath.Glob("*.go")
 		check(err)
@@ -79,18 +101,82 @@ func runGoGetCommand(depName string) {
 			s.Stop()
 			fmt.Printf("gophr %s %s not run in go a package\n", red("ERROR"), magenta("install"))
 			os.Exit(3)
-		} else {
-			depName = "./"
 		}
+
+		depName = "./"
 	}
 
-	cmd := exec.Command("go", "get", depName)
-	//var out bytes.Buffer
-	//cmd.Stdout = &out
-	err := cmd.Run()
-	check(err)
+	// Step 2 if get command is successful
+	/*
+		cmd := exec.Command("go", "get", depName)
+		//var out bytes.Buffer
+		//cmd.Stdout = &out
+		err := cmd.Run()
+		check(err)
+	*/
+
+	// Step 3 if command was successful, append to file
+	if len(fileName) > 0 {
+		// add to file
+		file, err := ioutil.ReadFile(fileName)
+		check(err)
+		augmentImportStatement(file, fileName, depName)
+	}
+
 	s.Stop()
 	//fmt.Printf("%q", out.String())
+}
+
+func augmentImportStatement(file []byte, fileName string, depName string) {
+	importStringbuffer := make([]string, 7)
+	newFileBuffer := make([]byte, 100)
+	depsBuffer := make([]rune, 1)
+	var foundImportStatement bool = false
+	var isInImport bool = false
+	var importCheckCount int = 0
+	var addedImport bool = false
+
+	for _, token := range file {
+		newFileBuffer = append(newFileBuffer, token)
+		token := rune(token)
+		if addedImport == false {
+			if foundImportStatement {
+				if isInImport {
+					fmt.Println("INSIDE IMPORT")
+					fmt.Println(string(token))
+					if token != ')' {
+						depsBuffer = append(depsBuffer, token)
+					} else {
+						isInImport = false
+						foundImportStatement = false
+						addedImport = true
+					}
+				} else {
+					if importCheckCount < 2 {
+						if token == '"' || token == '(' {
+							isInImport = true
+							fmt.Println(string(token))
+							newFileBuffer = append(newFileBuffer, depName)
+						}
+						importCheckCount++
+					} else {
+						foundImportStatement = false
+					}
+				}
+			} else {
+				if strings.Join(importStringbuffer[:], "") == "import" {
+					foundImportStatement = true
+				}
+			}
+
+			importStringbuffer = append(importStringbuffer[:1], importStringbuffer[1+1:]...)
+			importStringbuffer = append(importStringbuffer, string(token))
+		}
+	}
+	// TODO write the new file buffer to the old file
+	fmt.Println(newFileBuffer)
+	//d1 := []byte(newFileBuffer)
+	//rr := ioutil.WriteFile(fileName, d1, 0644)
 }
 
 /*
