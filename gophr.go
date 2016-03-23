@@ -25,15 +25,13 @@ func main() {
 	app.Name = "gophr"
 	app.Usage = "A good go package manager"
 	// TODO Will need flags later
-	/*
-		app.Flags = []cli.Flag{
-			cli.StringFlag{
-				Name:  "deps",
-				Value: "list dependencies",
-				Usage: "list go dependencies in file(s)",
-			},
-		}
-	*/
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "deps",
+			Value: "list dependencies",
+			Usage: "list go dependencies in file(s)",
+		},
+	}
 	app.Commands = []cli.Command{
 		{
 			Name:    "deps",
@@ -141,9 +139,10 @@ func augmentImportStatement(file []byte, fileName string, depName string) {
 		token := rune(token)
 		if addedImport == false {
 			if foundImportStatement {
+				//fmt.Println(string(token))
 				if isInImport {
-					fmt.Println("INSIDE IMPORT")
-					fmt.Println(string(token))
+					//fmt.Println("INSIDE IMPORT")
+					//fmt.Println(string(token))
 					if token != ')' {
 						depsBuffer = append(depsBuffer, token)
 					} else {
@@ -153,10 +152,10 @@ func augmentImportStatement(file []byte, fileName string, depName string) {
 					}
 				} else {
 					if importCheckCount < 2 {
-						if token == '"' || token == '(' {
+						if token == '(' {
 							isInImport = true
-							fmt.Println(string(token))
-							newFileBuffer = append(newFileBuffer, depName)
+							//newFileBuffer = append(newFileBuffer, byte(depName))
+							newFileBuffer = appendDepsToBuffer(newFileBuffer, depName)
 						}
 						importCheckCount++
 					} else {
@@ -174,9 +173,20 @@ func augmentImportStatement(file []byte, fileName string, depName string) {
 		}
 	}
 	// TODO write the new file buffer to the old file
-	fmt.Println(newFileBuffer)
-	//d1 := []byte(newFileBuffer)
-	//rr := ioutil.WriteFile(fileName, d1, 0644)
+	//fmt.Println(string(newFileBuffer))
+	d1 := []byte(newFileBuffer)
+	err := ioutil.WriteFile(fileName, d1, 0644)
+	check(err)
+}
+
+func appendDepsToBuffer(buffer []byte, depName string) []byte {
+	depNames := []byte("\n\t" + string('"') + depName + string('"'))
+	for _, token := range depNames {
+		fmt.Println(token)
+		buffer = append(buffer, token)
+	}
+
+	return buffer
 }
 
 /*
