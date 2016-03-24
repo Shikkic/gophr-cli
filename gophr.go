@@ -36,7 +36,7 @@ func main() {
 	app.Commands = []cli.Command{
 		{
 			Name:    "deps",
-			Aliases: []string{"dependencies"},
+			Aliases: []string{"d"},
 			Usage:   "List dependencies of a go file or folder",
 			Action: func(c *cli.Context) {
 				fileName := c.Args().First()
@@ -60,6 +60,7 @@ func main() {
 
 				// TODO Consider using -a or --all flag to re-install all dependencies
 				if c.NArg() == 0 {
+					// TODO move these into functions
 					red := color.New(color.FgRed).SprintFunc()
 					magenta := color.New(color.FgMagenta).SprintFunc()
 					fmt.Printf("gophr %s %s not run with a package name\n", red("ERROR"), magenta("install"))
@@ -69,6 +70,7 @@ func main() {
 
 				// TODO check if type string with reflect
 				if c.NArg() < 2 {
+					// TODO move these into functions
 					red := color.New(color.FgRed).SprintFunc()
 					magenta := color.New(color.FgMagenta).SprintFunc()
 					fmt.Printf("gophr %s %s not run with a file name\n", red("ERROR"), magenta("install"))
@@ -88,9 +90,128 @@ func main() {
 				runGoGetCommand(depName, fileName)
 			},
 		},
+		{
+			Name:    "uninstall",
+			Aliases: []string{"uninstall dep"},
+			Usage:   "Uninstall dependency",
+			Action: func(c *cli.Context) {
+				var depName string
+				var fileName string
+
+				// TODO Consider using -a or --all flag to re-install all dependencies
+				if c.NArg() == 0 {
+					// TODO move these into functions
+					red := color.New(color.FgRed).SprintFunc()
+					magenta := color.New(color.FgMagenta).SprintFunc()
+					fmt.Printf("gophr %s %s not run with a package name\n", red("ERROR"), magenta("uninstall"))
+					fmt.Printf("run %s for more help\n", magenta("gophr uninstall -h"))
+					os.Exit(3)
+				}
+
+				// TODO check if type string with reflect
+				if c.NArg() < 2 {
+					// TODO move these into functions
+					red := color.New(color.FgRed).SprintFunc()
+					magenta := color.New(color.FgMagenta).SprintFunc()
+					fmt.Printf("gophr %s %s not run with a file name\n", red("ERROR"), magenta("uninstall"))
+					fmt.Printf("run %s for more help\n", magenta("gophr uninstall -h"))
+					os.Exit(3)
+				}
+
+				if c.NArg() > 0 {
+					depName = c.Args()[0]
+				}
+
+				// TODO consider tabbing for arg if not present
+				if c.NArg() > 1 {
+					fileName = c.Args()[1]
+				}
+
+				runUninstallCommand(depName, fileName)
+			},
+		},
 	}
 	app.Run(os.Args)
 }
+
+func runUninstallCommand(depName string, fileName string) {
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Start()
+	depsArray := parseDeps(fileName)
+
+	fmt.Println("removing " + depName)
+	if depExistsInList(depName, depsArray) == false {
+		red := color.New(color.FgRed).SprintFunc()
+		magenta := color.New(color.FgMagenta).SprintFunc()
+		s.Stop()
+		fmt.Printf("gophr %s %s package %s not present in %s\n", red("ERROR"), magenta("uninstall"), magenta("'"+depName+"'"), magenta(fileName))
+		os.Exit(3)
+	}
+
+}
+
+func depExistsInList(depName string, depArray []string) bool {
+	for _, currDepName := range depArray {
+		if currDepName == depName {
+			return true
+		}
+	}
+
+	return false
+}
+
+/*
+ Deps Command Functions
+*/
+
+// TODO consider renaming to more specific
+func readFiles(goFiles []string) {
+	if len(goFiles) == 0 {
+		path, err := os.Getwd()
+		check(err)
+		fmt.Println(path)
+		fmt.Println("└── (empty)\n")
+		os.Exit(3)
+	}
+
+	for _, goFile := range goFiles {
+		readFile(goFile)
+	}
+}
+
+func readFile(goFilePath string) {
+	depsArray := parseDeps(goFilePath)
+	// TODO Check to determine all github which packages are installed for
+	// use map to distinguish
+	printDeps(depsArray, goFilePath)
+}
+
+func printDeps(depsArray []string, goFileName string) {
+	fmt.Print("Go Dependecies for ")
+	color.Blue(goFileName)
+
+	for index, depName := range depsArray {
+
+		if index == (len(depsArray) - 1) {
+			if strings.Contains(depName, "github") {
+				color.Green("└── " + depName)
+			} else {
+				fmt.Println("└── " + depName)
+			}
+		} else {
+			if strings.Contains(depName, "github") {
+				color.Green("├─┬ " + depName)
+			} else {
+				fmt.Println("├─┬ " + depName)
+			}
+		}
+	}
+	fmt.Println("")
+}
+
+/*
+	Install Command Functions
+*/
 
 func runGoGetCommand(depName string, fileName string) {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -196,59 +317,6 @@ func appendDepsToBuffer(buffer []byte, depName []byte) []byte {
 }
 
 /*
- Deps Command Functions
-*/
-
-func readFiles(goFiles []string) {
-	if len(goFiles) == 0 {
-		path, err := os.Getwd()
-		check(err)
-		fmt.Println(path)
-		fmt.Println("└── (empty)\n")
-		os.Exit(3)
-	}
-
-	for _, goFile := range goFiles {
-		readFile(goFile)
-	}
-}
-
-func readFile(goFilePath string) {
-	depsArray := parseDeps(goFilePath)
-	// TODO Check to determine all github packages are installed
-	printDeps(depsArray, goFilePath)
-}
-
-func printDeps(depsArray []string, goFileName string) {
-	fmt.Print("Go Dependecies for ")
-	color.Blue(goFileName)
-
-	for index, depName := range depsArray {
-		depName = strings.Replace(depName, string('"'), " ", 2)
-		depName = strings.Replace(depName, "\t", "", 10)
-
-		if index == (len(depsArray) - 1) {
-			if strings.Contains(depName, "github") {
-				color.Green("└──" + depName)
-			} else {
-				fmt.Println("└──" + depName)
-			}
-		} else {
-			if strings.Contains(depName, "github") {
-				color.Green("├─┬" + depName)
-			} else {
-				fmt.Println("├─┬" + depName)
-			}
-		}
-	}
-	fmt.Println("")
-}
-
-/*
-	Install Command Functions
-*/
-
-/*
 Helper Functions
 */
 
@@ -260,7 +328,9 @@ func parseDeps(fileName string) []string {
 
 	depsArray := make([]string, len(f.Imports))
 	for index, s := range f.Imports {
-		depsArray[index] = s.Path.Value
+		depName := strings.Replace(s.Path.Value, string('"'), " ", 2)
+		depName = strings.Replace(depName, " ", "", 10)
+		depsArray[index] = depName
 	}
 
 	return depsArray
