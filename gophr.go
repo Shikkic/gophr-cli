@@ -6,9 +6,8 @@ import (
 	//"bytes"
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
-	"io"
+	//"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,13 +26,13 @@ func main() {
 	app.Name = "gophr"
 	app.Usage = "A good go package manager"
 	// TODO Will need flags later
-	app.Flags = []cli.Flag{
+	/*app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "deps",
 			Value: "list dependencies",
 			Usage: "list go dependencies in file(s)",
 		},
-	}
+	}*/
 	app.Commands = []cli.Command{
 		{
 			Name:    "deps",
@@ -41,8 +40,6 @@ func main() {
 			Usage:   "List dependencies of a go file or folder",
 			Action: func(c *cli.Context) {
 				fileName := c.Args().First()
-				parseDeps(fileName)
-				// TODO FUNCTIONALITY check if deps are present in the go files AND if they're installed or not
 				switch {
 				case len(fileName) != 0:
 					readFile(fileName)
@@ -93,22 +90,6 @@ func main() {
 		},
 	}
 	app.Run(os.Args)
-}
-
-func parseDeps(fileName string) {
-	fset := token.NewFileSet()
-
-	f, err := parser.ParseFile(fset, fileName, nil, parser.ImportsOnly)
-	check(err)
-
-	fmt.Println(len(f.Imports))
-	depsArray := make([]string, len(f.Imports))
-
-	for index, s := range f.Imports {
-		depsArray[index] = s.Path.Value
-	}
-
-	return depsArray
 }
 
 func runGoGetCommand(depName string, fileName string) {
@@ -233,81 +214,20 @@ func readFiles(goFiles []string) {
 }
 
 func readFile(goFilePath string) {
-	// create a file reference and open it
-	fileRef, err := os.Open(goFilePath)
-	check(err)
-
-	importStringbuffer := make([]string, 7)
-	depsBuffer := make([]rune, 1)
-	var foundImportStatement bool = false
-	var isInImport bool = false
-	var importCheckCount int = 0
-
-	for {
-		// create 7 byte read buffer
-		readBuffer := make([]byte, readBufferSize)
-		_, err := fileRef.Read(readBuffer)
-
-		if err != nil {
-			if err == io.EOF {
-				fileRef.Close()
-				break
-			}
-			fmt.Println(err)
-		}
-
-		// For each read buffer, parse and put it into
-		for _, token := range readBuffer {
-			token := rune(token)
-
-			if foundImportStatement {
-				if isInImport {
-					if token != ')' {
-						depsBuffer = append(depsBuffer, token)
-					} else {
-						isInImport = false
-						foundImportStatement = false
-					}
-				} else {
-					if importCheckCount < 2 {
-						if token == '"' || token == '(' {
-							isInImport = true
-						}
-						importCheckCount++
-					} else {
-						foundImportStatement = false
-					}
-				}
-			} else {
-				if strings.Join(importStringbuffer[:], "") == "import" {
-					foundImportStatement = true
-				}
-			}
-
-			importStringbuffer = append(importStringbuffer[:1], importStringbuffer[1+1:]...)
-			importStringbuffer = append(importStringbuffer, string(token))
-		}
-	}
-
-	// printDeps
-	// TODO Proably include some functions to clean up the depsBuffer for printing, to seperate concern
-	printDeps(string(depsBuffer[:len(depsBuffer)]), goFilePath)
+	depsArray := parseDeps(goFilePath)
+	// TODO Check to determine all github packages are installed
+	printDeps(depsArray, goFilePath)
 }
 
-func printDeps(depsArray string, goFileName string) {
-	depsArray = strings.Trim(depsArray, "\n\t\x00 ")
-	importPackages := strings.Split(depsArray, "\n")
-	// Clean up strings and remove non-github
+func printDeps(depsArray []string, goFileName string) {
 	fmt.Print("Go Dependecies for ")
 	color.Blue(goFileName)
 
-	for i := 0; i < len(importPackages); i++ {
-		depName := importPackages[i]
+	for index, depName := range depsArray {
 		depName = strings.Replace(depName, string('"'), " ", 2)
 		depName = strings.Replace(depName, "\t", "", 10)
 
-		if i == (len(importPackages) - 1) {
-			// This is the last dependency
+		if index == (len(depsArray) - 1) {
 			if strings.Contains(depName, "github") {
 				color.Green("└──" + depName)
 			} else {
@@ -332,19 +252,22 @@ func printDeps(depsArray string, goFileName string) {
 Helper Functions
 */
 
+func parseDeps(fileName string) []string {
+	fset := token.NewFileSet()
+
+	f, err := parser.ParseFile(fset, fileName, nil, parser.ImportsOnly)
+	check(err)
+
+	depsArray := make([]string, len(f.Imports))
+	for index, s := range f.Imports {
+		depsArray[index] = s.Path.Value
+	}
+
+	return depsArray
+}
+
 func check(e error) {
 	if e != nil {
 		panic(e)
 	}
-}
-
-// NOTE might need this for later functionality
-func getRequest(string) string {
-	resp, err := http.Get("http://github.com/shikkic")
-	if err != nil {
-		return "nil"
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	return string(body)
 }
