@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/briandowns/spinner"
-	//"bytes"
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	//"io"
@@ -139,7 +138,6 @@ func runUninstallCommand(depName string, fileName string) {
 	s.Start()
 	depsArray := parseDeps(fileName)
 
-	fmt.Println("removing " + depName)
 	if depExistsInList(depName, depsArray) == false {
 		red := color.New(color.FgRed).SprintFunc()
 		magenta := color.New(color.FgMagenta).SprintFunc()
@@ -191,12 +189,11 @@ func printDeps(depsArray []string, goFileName string) {
 	color.Blue(goFileName)
 
 	for index, depName := range depsArray {
-
 		if index == (len(depsArray) - 1) {
 			if strings.Contains(depName, "github") {
-				color.Green("└── " + depName)
+				color.Green("└── " + depName + "\n")
 			} else {
-				fmt.Println("└── " + depName)
+				fmt.Println("└── " + depName + "\n")
 			}
 		} else {
 			if strings.Contains(depName, "github") {
@@ -206,7 +203,6 @@ func printDeps(depsArray []string, goFileName string) {
 			}
 		}
 	}
-	fmt.Println("")
 }
 
 /*
