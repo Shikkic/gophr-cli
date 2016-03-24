@@ -1,9 +1,9 @@
 package main
 
 import (
-	//"bytes"
 	"fmt"
 	"github.com/briandowns/spinner"
+	//"bytes"
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	"io"
@@ -13,6 +13,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	//"reflect"
+	"go/parser"
+	"go/token"
 	"strings"
 	"time"
 )
@@ -39,6 +41,7 @@ func main() {
 			Usage:   "List dependencies of a go file or folder",
 			Action: func(c *cli.Context) {
 				fileName := c.Args().First()
+				parseDeps(fileName)
 				// TODO FUNCTIONALITY check if deps are present in the go files AND if they're installed or not
 				switch {
 				case len(fileName) != 0:
@@ -90,6 +93,22 @@ func main() {
 		},
 	}
 	app.Run(os.Args)
+}
+
+func parseDeps(fileName string) {
+	fset := token.NewFileSet()
+
+	f, err := parser.ParseFile(fset, fileName, nil, parser.ImportsOnly)
+	check(err)
+
+	fmt.Println(len(f.Imports))
+	depsArray := make([]string, len(f.Imports))
+
+	for index, s := range f.Imports {
+		depsArray[index] = s.Path.Value
+	}
+
+	return depsArray
 }
 
 func runGoGetCommand(depName string, fileName string) {
