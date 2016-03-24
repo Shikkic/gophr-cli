@@ -10,9 +10,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	//"reflect"
-	//"os/exec"
+	"os/exec"
 	"path/filepath"
+	//"reflect"
 	"strings"
 	"time"
 )
@@ -67,6 +67,15 @@ func main() {
 					os.Exit(3)
 				}
 
+				// TODO check if type string with reflect
+				if c.NArg() < 2 {
+					red := color.New(color.FgRed).SprintFunc()
+					magenta := color.New(color.FgMagenta).SprintFunc()
+					fmt.Printf("gophr %s %s not run with a file name\n", red("ERROR"), magenta("install"))
+					fmt.Printf("run %s for more help\n", magenta("gophr install -h"))
+					os.Exit(3)
+				}
+
 				if c.NArg() > 0 {
 					depName = c.Args()[0]
 				}
@@ -84,11 +93,11 @@ func main() {
 }
 
 func runGoGetCommand(depName string, fileName string) {
-	fmt.Println(fileName)
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Start()
 
 	// Step 1 Determine if we need to download and install dependencies of the folder or for specified dependency
+	// TODO instead use a flag to determine if it should install to all packages
 	if len(depName) == 0 {
 		fls, err := filepath.Glob("*.go")
 		check(err)
@@ -104,14 +113,14 @@ func runGoGetCommand(depName string, fileName string) {
 		depName = "./"
 	}
 
-	// Step 2 if get command is successful
-	/*
+	// Step 2 run get command if
+	if strings.Contains(depName, "github.com") {
 		cmd := exec.Command("go", "get", depName)
 		//var out bytes.Buffer
 		//cmd.Stdout = &out
 		err := cmd.Run()
 		check(err)
-	*/
+	}
 
 	// Step 3 if command was successful, append to file
 	if len(fileName) > 0 {
@@ -121,13 +130,18 @@ func runGoGetCommand(depName string, fileName string) {
 		augmentImportStatement(file, fileName, depName)
 	}
 
+	// Step 4 after adding it to import statement run go fmt on file
+	cmd := exec.Command("go", "fmt", fileName)
+	err := cmd.Run()
+	check(err)
+
 	s.Stop()
-	//fmt.Printf("%q", out.String())
 }
 
 func augmentImportStatement(file []byte, fileName string, depName string) {
+	formatedDepName := []byte("\n\t" + string('"') + depName + string('"'))
 	importStringbuffer := make([]string, 7)
-	newFileBuffer := make([]byte, 100)
+	newFileBuffer := make([]byte, 0)
 	depsBuffer := make([]rune, 1)
 	var foundImportStatement bool = false
 	var isInImport bool = false
@@ -139,10 +153,7 @@ func augmentImportStatement(file []byte, fileName string, depName string) {
 		token := rune(token)
 		if addedImport == false {
 			if foundImportStatement {
-				//fmt.Println(string(token))
 				if isInImport {
-					//fmt.Println("INSIDE IMPORT")
-					//fmt.Println(string(token))
 					if token != ')' {
 						depsBuffer = append(depsBuffer, token)
 					} else {
@@ -154,8 +165,7 @@ func augmentImportStatement(file []byte, fileName string, depName string) {
 					if importCheckCount < 2 {
 						if token == '(' {
 							isInImport = true
-							//newFileBuffer = append(newFileBuffer, byte(depName))
-							newFileBuffer = appendDepsToBuffer(newFileBuffer, depName)
+							newFileBuffer = appendDepsToBuffer(newFileBuffer, formatedDepName)
 						}
 						importCheckCount++
 					} else {
@@ -172,17 +182,13 @@ func augmentImportStatement(file []byte, fileName string, depName string) {
 			importStringbuffer = append(importStringbuffer, string(token))
 		}
 	}
-	// TODO write the new file buffer to the old file
-	//fmt.Println(string(newFileBuffer))
-	d1 := []byte(newFileBuffer)
-	err := ioutil.WriteFile(fileName, d1, 0644)
+
+	err := ioutil.WriteFile(fileName, newFileBuffer, 0644)
 	check(err)
 }
 
-func appendDepsToBuffer(buffer []byte, depName string) []byte {
-	depNames := []byte("\n\t" + string('"') + depName + string('"'))
-	for _, token := range depNames {
-		fmt.Println(token)
+func appendDepsToBuffer(buffer []byte, depName []byte) []byte {
+	for _, token := range depName {
 		buffer = append(buffer, token)
 	}
 
