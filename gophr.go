@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/briandowns/spinner"
 	"github.com/codegangsta/cli"
@@ -19,6 +20,12 @@ import (
 
 // Define Constants
 const readBufferSize = 7
+
+// Define Dependency Struct
+type Dependency struct {
+	name, version string
+	installed     bool
+}
 
 func main() {
 	app := cli.NewApp()
@@ -67,7 +74,7 @@ func main() {
 					os.Exit(3)
 				}
 
-				// TODO check if type string with reflect
+				// TODO check if type string with reflect!
 				if c.NArg() < 2 {
 					// TODO move these into functions
 					red := color.New(color.FgRed).SprintFunc()
@@ -127,6 +134,46 @@ func main() {
 				}
 
 				runUninstallCommand(depName, fileName)
+			},
+		},
+		{
+			Name:    "init",
+			Aliases: []string{"new"},
+			Usage:   "initialize new project",
+			Action: func(c *cli.Context) {
+				var repoAuthor string
+				var projectName string
+
+				// Is GOPATH SET
+				goPath := os.Getenv("GOPATH")
+				if len(goPath) < 0 {
+					// ERROR
+					os.Exit(3)
+				}
+
+				fmt.Println(goPath)
+
+				// TODO consider tabbing for arg if not present
+				if c.NArg() == 0 {
+					reader := bufio.NewReader(os.Stdin)
+					fmt.Print("Repo Author: ")
+					repoAuthorInput, _ := reader.ReadString('\n')
+					repoAuthor = repoAuthorInput
+					fmt.Print("Project Name: ")
+					projectNameInput, _ := reader.ReadString('\n')
+					projectName = projectNameInput
+				}
+
+				fmt.Println("File path =" + goPath + "/src/github.com/*.go")
+				fls, err := filepath.Glob(goPath + "/src/github.com/*")
+				check(err)
+				fmt.Println(fls)
+				fmt.Println(projectName)
+				fmt.Println(repoAuthor)
+
+				//os.MkdirAll(goPath+"/src/"+repoAuthor+"/"+projectName+"/", 0777)
+				// check if GOPATHi
+				//createNewProjectDir()
 			},
 		},
 	}
@@ -316,6 +363,7 @@ func appendDepsToBuffer(buffer []byte, depName []byte) []byte {
 Helper Functions
 */
 
+// Parse Dependencies from a .go file
 func parseDeps(fileName string) []string {
 	fset := token.NewFileSet()
 
@@ -330,6 +378,16 @@ func parseDeps(fileName string) []string {
 	}
 
 	return depsArray
+}
+
+// Returns an array of built dependency structs from an array of dep names.
+func buildDependencyStructs(depNames []string) {
+
+}
+
+// Return a map of dependencies that have the attributes installed or missing
+func validateDepIsInstalled(depName string) {
+
 }
 
 func check(e error) {
