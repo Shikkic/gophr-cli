@@ -19,7 +19,8 @@ import (
 )
 
 // Define Constants
-const readBufferSize = 7
+const readBufferSize int = 7
+const basicSkeleton string = "\tpackage main\nimport (\n\"fmt\"\n)\n main(fmt.Println(\"hello world!\"){\n}"
 
 // Define Dependency Struct
 type Dependency struct {
@@ -27,18 +28,11 @@ type Dependency struct {
 	installed     bool
 }
 
+// TODO Consider breaking up each command into seperate go file
 func main() {
 	app := cli.NewApp()
 	app.Name = "gophr"
 	app.Usage = "A good go package manager"
-	// TODO Will need flags later
-	/*app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "deps",
-			Value: "list dependencies",
-			Usage: "list go dependencies in file(s)",
-		},
-	}*/
 	app.Commands = []cli.Command{
 		{
 			Name:    "deps",
@@ -60,6 +54,13 @@ func main() {
 			Name:    "install",
 			Aliases: []string{"install deps"},
 			Usage:   "Install dependency",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "a",
+					Value: "all",
+					Usage: "install dependency to all files",
+				},
+			},
 			Action: func(c *cli.Context) {
 				var depName string
 				var fileName string
@@ -144,7 +145,7 @@ func main() {
 				var repoAuthor string
 				var projectName string
 
-				// Is GOPATH SET
+				// First check if GOPATH is set, err if not
 				goPath := os.Getenv("GOPATH")
 				if len(goPath) < 0 {
 					// ERROR
@@ -165,14 +166,18 @@ func main() {
 				}
 
 				fmt.Println("File path =" + goPath + "/src/github.com/*.go")
-				fls, err := filepath.Glob(goPath + "/src/github.com/*")
-				check(err)
-				fmt.Println(fls)
+				//fls, err := filepath.Glob(goPath + "/src/github.com/*")
+				//check(err)
+				//fmt.Println(fls)
 				fmt.Println(projectName)
 				fmt.Println(repoAuthor)
+				filePath := goPath + filepath.Join("src", "github.com", repoAuthor)
+				fmt.Println(filePath)
 
-				//os.MkdirAll(goPath+"/src/"+repoAuthor+"/"+projectName+"/", 0777)
-				// check if GOPATHi
+				file, err := os.Stat(filePath)
+				fmt.Println(file)
+				check(err)
+				// TODO move all this functionality into createNewProjectDir command
 				//createNewProjectDir()
 			},
 		},
