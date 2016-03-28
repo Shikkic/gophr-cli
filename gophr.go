@@ -171,14 +171,43 @@ func main() {
 				//fmt.Println(fls)
 				fmt.Println(projectName)
 				fmt.Println(repoAuthor)
-				filePath := goPath + filepath.Join("src", "github.com", repoAuthor)
+				filePath := goPath + filepath.Join("src")
 				fmt.Println(filePath)
 
 				file, err := os.Stat(filePath)
+				if err != nil || file == nil {
+					fmt.Println("File is empty")
+				}
+
+				filePath = goPath + filepath.Join("src", "github.com")
+				file, err = os.Stat(filePath)
+				fmt.Println(file.IsDir())
+				if err != nil || file.IsDir() != true {
+					fmt.Println("File is empty")
+				}
+
+				//filePath = goPath + filepath.Join("src", "github.com", repoAuthor)
+				file, err = os.Stat(filePath)
+				fmt.Println(file.IsDir())
+				if err != nil {
+					if os.IsNotExist(err) {
+						fmt.Println("File Does not Exist")
+					}
+				}
+
+				//filePath = goPath + filepath.Join("src", "github.com", repoAuthor, projectName, projectName)
+				file, err = os.Stat(filePath)
+				fmt.Println(file.IsDir())
+				if err != nil || file == nil {
+					fmt.Println("File is empty")
+				}
 				fmt.Println(file)
 				check(err)
 				// TODO move all this functionality into createNewProjectDir command
 				//createNewProjectDir()
+				d1 := []byte(basicSkeleton)
+				err = ioutil.WriteFile(filePath+projectName+".go", d1, 0644)
+				check(err)
 			},
 		},
 	}
