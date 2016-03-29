@@ -7,13 +7,15 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	//"io"
+	"go/parser"
+	"go/token"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	//"reflect"
-	"go/parser"
-	"go/token"
+	// Dont need this
 	"strings"
 	"time"
 )
@@ -206,6 +208,7 @@ func runUninstallCommand(depName string, fileName string) {
 	s.Start()
 	depsArray := parseDeps(fileName)
 
+	// If a dep does not exist in the import statemtn, if it does not exist then throw an error
 	if depExistsInList(depName, depsArray) == false {
 		red := color.New(color.FgRed).SprintFunc()
 		magenta := color.New(color.FgMagenta).SprintFunc()
@@ -214,6 +217,41 @@ func runUninstallCommand(depName string, fileName string) {
 		os.Exit(3)
 	}
 
+	// If a dep exist begin process of removing it from the import statement
+	file, err := os.Open("./" + fileName)
+	newFileBuffer := make([]byte, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fileLine := scanner.Text() + "\n"
+		if fileLine != "\t\""+depName+"\"\n" {
+			byteBuffer := scanner.Bytes()
+			byteBuffer = append(byteBuffer, byte('\n'))
+			for _, token := range byteBuffer {
+				fmt.Print(string(token))
+				newFileBuffer = append(newFileBuffer, token)
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	err = ioutil.WriteFile("./"+fileName, newFileBuffer, 0644)
+	check(err)
+
+	depsArray = parseDeps(fileName)
+	if depExistsInList(depName, depsArray) == false {
+		magenta := color.New(color.FgMagenta).SprintFunc()
+		s.Stop()
+		fmt.Printf("✓ %s was successfully uninstalled from %s\n", magenta("'"+depName+"'"), magenta(fileName))
+		os.Exit(3)
+	}
 }
 
 func depExistsInList(depName string, depArray []string) bool {
@@ -319,6 +357,17 @@ func runGoGetCommand(depName string, fileName string) {
 	cmd := exec.Command("go", "fmt", fileName)
 	err := cmd.Run()
 	check(err)
+
+	// Check if exits in file
+	depsArray := parseDeps(fileName)
+	if depExistsInList(depName, depsArray) == true {
+		magenta := color.New(color.FgMagenta).SprintFunc()
+		s.Stop()
+		fmt.Printf("✓ %s was successfully installed into %s\n", magenta("'"+depName+"'"), magenta(fileName))
+		os.Exit(3)
+	} else {
+		//PANIC ITS NOT THERE
+	}
 
 	s.Stop()
 }
