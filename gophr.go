@@ -232,7 +232,6 @@ func runUninstallCommand(depName string, fileName string) {
 			byteBuffer := scanner.Bytes()
 			byteBuffer = append(byteBuffer, byte('\n'))
 			for _, token := range byteBuffer {
-				fmt.Print(string(token))
 				newFileBuffer = append(newFileBuffer, token)
 			}
 		}
@@ -249,6 +248,7 @@ func runUninstallCommand(depName string, fileName string) {
 	if depExistsInList(depName, depsArray) == false {
 		magenta := color.New(color.FgMagenta).SprintFunc()
 		s.Stop()
+		// TODO turn this check mark green
 		fmt.Printf("✓ %s was successfully uninstalled from %s\n", magenta("'"+depName+"'"), magenta(fileName))
 		os.Exit(3)
 	}
