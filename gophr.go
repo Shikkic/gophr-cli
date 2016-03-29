@@ -72,7 +72,7 @@ func main() {
 					// TODO move these into functions
 					red := color.New(color.FgRed).SprintFunc()
 					magenta := color.New(color.FgMagenta).SprintFunc()
-					fmt.Printf("gophr %s %s not run with a package name\n", red("ERROR"), magenta("install"))
+					fmt.Printf("%s gophr %s %s not run with a package name\n", red("✗"), red("ERROR"), magenta("install"))
 					fmt.Printf("run %s for more help\n", magenta("gophr install -h"))
 					os.Exit(3)
 				}
@@ -82,7 +82,7 @@ func main() {
 					// TODO move these into functions
 					red := color.New(color.FgRed).SprintFunc()
 					magenta := color.New(color.FgMagenta).SprintFunc()
-					fmt.Printf("gophr %s %s not run with a file name\n", red("ERROR"), magenta("install"))
+					fmt.Printf("%s gophr %s %s not run with a file name\n", red("✗"), red("ERROR"), magenta("install"))
 					fmt.Printf("run %s for more help\n", magenta("gophr install -h"))
 					os.Exit(3)
 				}
@@ -112,7 +112,7 @@ func main() {
 					// TODO move these into functions
 					red := color.New(color.FgRed).SprintFunc()
 					magenta := color.New(color.FgMagenta).SprintFunc()
-					fmt.Printf("gophr %s %s not run with a package name\n", red("ERROR"), magenta("uninstall"))
+					fmt.Printf("%s gophr %s %s not run with a package name\n", red("✗"), red("ERROR"), magenta("uninstall"))
 					fmt.Printf("run %s for more help\n", magenta("gophr uninstall -h"))
 					os.Exit(3)
 				}
@@ -122,7 +122,7 @@ func main() {
 					// TODO move these into functions
 					red := color.New(color.FgRed).SprintFunc()
 					magenta := color.New(color.FgMagenta).SprintFunc()
-					fmt.Printf("gophr %s %s not run with a file name\n", red("ERROR"), magenta("uninstall"))
+					fmt.Printf("%s gophr %s %s not run with a file name\n", red("✗"), red("ERROR"), magenta("uninstall"))
 					fmt.Printf("run %s for more help\n", magenta("gophr uninstall -h"))
 					os.Exit(3)
 				}
@@ -159,7 +159,7 @@ func main() {
 				if len(goPath) < 0 {
 					red := color.New(color.FgRed).SprintFunc()
 					magenta := color.New(color.FgMagenta).SprintFunc()
-					fmt.Printf("gophr %s %s $GOPATH not set\n", red("ERROR"), magenta("init"))
+					fmt.Printf("%s gophr %s %s $GOPATH not set\n", red("✗"), red("ERROR"), magenta("init"))
 					os.Exit(3)
 				}
 
@@ -188,7 +188,7 @@ func main() {
 						if fileName == initPath+"/"+projectName+".go" {
 							red := color.New(color.FgRed).SprintFunc()
 							magenta := color.New(color.FgMagenta).SprintFunc()
-							fmt.Printf("gophr %s %s file with that name already exists\n", red("ERROR"), magenta("init"))
+							fmt.Printf("%s gophr %s %s file with that name already exists\n", red("✗"), red("ERROR"), magenta("init"))
 							os.Exit(3)
 						}
 					}
@@ -213,7 +213,7 @@ func runUninstallCommand(depName string, fileName string) {
 		red := color.New(color.FgRed).SprintFunc()
 		magenta := color.New(color.FgMagenta).SprintFunc()
 		s.Stop()
-		fmt.Printf("gophr %s %s package %s not present in %s\n", red("ERROR"), magenta("uninstall"), magenta("'"+depName+"'"), magenta(fileName))
+		fmt.Printf("%s gophr %s %s package %s not present in %s\n", red("✗"), red("ERROR"), magenta("uninstall"), magenta("'"+depName+"'"), magenta(fileName))
 		os.Exit(3)
 	}
 
