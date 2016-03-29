@@ -20,7 +20,7 @@ import (
 
 // Define Constants
 const readBufferSize int = 7
-const basicSkeleton string = "\tpackage main\nimport (\n\"fmt\"\n)\n main(fmt.Println(\"hello world!\"){\n}"
+const basicSkeleton string = "package main\n\nimport (\n\t\"fmt\"\n)\n\nfunc main () {\n\tfmt.Println(\"hello world!\")\n}"
 
 // Define Dependency Struct
 type Dependency struct {
@@ -141,6 +141,13 @@ func main() {
 			Name:    "init",
 			Aliases: []string{"new"},
 			Usage:   "initialize new project",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "lib",
+					Value: "library",
+					Usage: "create a basic library",
+				},
+			},
 			Action: func(c *cli.Context) {
 				var repoAuthor string
 				var projectName string
@@ -148,65 +155,45 @@ func main() {
 				// First check if GOPATH is set, err if not
 				goPath := os.Getenv("GOPATH")
 				if len(goPath) < 0 {
-					// ERROR
+					red := color.New(color.FgRed).SprintFunc()
+					magenta := color.New(color.FgMagenta).SprintFunc()
+					fmt.Printf("gophr %s %s $GOPATH not set\n", red("ERROR"), magenta("init"))
 					os.Exit(3)
 				}
-
-				fmt.Println(goPath)
 
 				// TODO consider tabbing for arg if not present
 				if c.NArg() == 0 {
 					reader := bufio.NewReader(os.Stdin)
 					fmt.Print("Repo Author: ")
 					repoAuthorInput, _ := reader.ReadString('\n')
-					repoAuthor = repoAuthorInput
+					repoAuthor = strings.Replace(repoAuthorInput, string('\n'), "", 1)
 					fmt.Print("Project Name: ")
 					projectNameInput, _ := reader.ReadString('\n')
-					projectName = projectNameInput
+					projectName = strings.Replace(projectNameInput, string('\n'), "", 1)
 				}
 
-				fmt.Println("File path =" + goPath + "/src/github.com/*.go")
-				//fls, err := filepath.Glob(goPath + "/src/github.com/*")
-				//check(err)
-				//fmt.Println(fls)
-				fmt.Println(projectName)
-				fmt.Println(repoAuthor)
-				filePath := goPath + filepath.Join("src")
-				fmt.Println(filePath)
+				initPath := filepath.Join(goPath, "src", "github.com", repoAuthor, projectName)
+				os.MkdirAll(initPath, 0777)
 
-				file, err := os.Stat(filePath)
-				if err != nil || file == nil {
-					fmt.Println("File is empty")
-				}
+				// Now we need to glob to make sure a file name like that doesn't already exists
+				fls, err := filepath.Glob(initPath + "/*.go")
+				check(err)
+				fmt.Println(fls)
 
-				filePath = goPath + filepath.Join("src", "github.com")
-				file, err = os.Stat(filePath)
-				fmt.Println(file.IsDir())
-				if err != nil || file.IsDir() != true {
-					fmt.Println("File is empty")
-				}
-
-				//filePath = goPath + filepath.Join("src", "github.com", repoAuthor)
-				file, err = os.Stat(filePath)
-				fmt.Println(file.IsDir())
-				if err != nil {
-					if os.IsNotExist(err) {
-						fmt.Println("File Does not Exist")
+				if len(fls) > 0 {
+					// check if the .go file names match your project name
+					for _, fileName := range fls {
+						if fileName == initPath+"/"+projectName+".go" {
+							red := color.New(color.FgRed).SprintFunc()
+							magenta := color.New(color.FgMagenta).SprintFunc()
+							fmt.Printf("gophr %s %s file with that name already exists\n", red("ERROR"), magenta("init"))
+							os.Exit(3)
+						}
 					}
 				}
 
-				//filePath = goPath + filepath.Join("src", "github.com", repoAuthor, projectName, projectName)
-				file, err = os.Stat(filePath)
-				fmt.Println(file.IsDir())
-				if err != nil || file == nil {
-					fmt.Println("File is empty")
-				}
-				fmt.Println(file)
-				check(err)
-				// TODO move all this functionality into createNewProjectDir command
-				//createNewProjectDir()
-				d1 := []byte(basicSkeleton)
-				err = ioutil.WriteFile(filePath+projectName+".go", d1, 0644)
+				newFileBuffer := []byte(basicSkeleton)
+				err = ioutil.WriteFile(filepath.Join(initPath, projectName)+".go", newFileBuffer, 0644)
 				check(err)
 			},
 		},
