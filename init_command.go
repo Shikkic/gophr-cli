@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 )
 
+const basicSkeleton string = "package main\n\nimport (\n\t\"fmt\"\n)\n\nfunc main () {\n\tfmt.Println(\"hello world!\")\n}"
+
 func RunInitCommand(goPath string, repoAuthor string, projectName string) {
 	initPath := filepath.Join(goPath, "src", "github.com", repoAuthor, projectName)
 	os.MkdirAll(initPath, 0777)

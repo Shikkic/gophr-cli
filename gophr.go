@@ -21,7 +21,6 @@ import (
 
 // Define Constants
 const readBufferSize int = 7
-const basicSkeleton string = "package main\n\nimport (\n\t\"fmt\"\n)\n\nfunc main () {\n\tfmt.Println(\"hello world!\")\n}"
 
 // Define Dependency Struct
 type Dependency struct {
