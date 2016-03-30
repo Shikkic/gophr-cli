@@ -16,7 +16,7 @@ func RunInitCommand(goPath string, repoAuthor string, projectName string) {
 
 	// Now we need to glob to make sure a file name like that doesn't already exists
 	fls, err := filepath.Glob(initPath + "/*.go")
-	check(err)
+	Check(err)
 
 	if len(fls) > 0 {
 		// check if the .go file names match your project name
@@ -34,5 +34,5 @@ func RunInitCommand(goPath string, repoAuthor string, projectName string) {
 
 	newFileBuffer := []byte(basicSkeleton)
 	err = ioutil.WriteFile(filepath.Join(initPath, projectName)+".go", newFileBuffer, 0644)
-	check(err)
+	Check(err)
 }
