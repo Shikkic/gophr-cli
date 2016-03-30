@@ -15,7 +15,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	//"reflect"
-	// Dont need this
 	"strings"
 	"time"
 )
@@ -199,8 +198,77 @@ func main() {
 				check(err)
 			},
 		},
+		{
+			Name:    "migrate",
+			Aliases: []string{"convert"},
+			Usage:   "Migrate go package to use gophr.pm/<REPO_NAME>",
+			Action: func(c *cli.Context) {
+				var fileName string
+
+				// TODO consider tabbing for arg if not present
+				if c.NArg() == 0 {
+					reader := bufio.NewReader(os.Stdin)
+					fmt.Print("File Name: ")
+					fileNameInput, _ := reader.ReadString('\n')
+					fileName = strings.Replace(fileNameInput, string('\n'), "", 1)
+				} else {
+					fileName = c.Args().First()
+				}
+
+				runMigrateCommand(fileName)
+			},
+		},
 	}
 	app.Run(os.Args)
+}
+
+func runMigrateCommand(fileName string) {
+	// If a dep exist begin process of removing it from the import statement
+	file, err := os.Open("./" + fileName)
+	foundImport := false
+	newFileBuffer := make([]byte, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fileLine := scanner.Text() + "\n"
+		byteBuffer := scanner.Bytes()
+
+		if foundImport == true {
+			if fileLine == ")\n" {
+				foundImport = false
+			} else {
+				// TODO ask for a version number
+				if strings.Contains(fileLine, "github.com") {
+					magenta := color.New(color.FgMagenta).SprintFunc()
+					reader := bufio.NewReader(os.Stdin)
+					depName := strings.Replace(scanner.Text(), string('"'), "", 2)
+					depName = strings.Replace(depName, string('\t'), "", 1)
+					fmt.Printf("%s version: ", magenta(depName))
+					versionNumberInput, _ := reader.ReadString('\n')
+					versionNumber := strings.Replace(versionNumberInput, string('\n'), "", 1)
+					byteBuffer = []byte("\t\"" + strings.Replace(depName, "github.com/", "gophr.dev/", 1) + "@" + versionNumber + "\"")
+				}
+			}
+		} else if fileLine == "import (\n" {
+			foundImport = true
+		}
+
+		byteBuffer = append(byteBuffer, byte('\n'))
+		for _, token := range byteBuffer {
+			newFileBuffer = append(newFileBuffer, token)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	err = ioutil.WriteFile("./"+fileName, newFileBuffer, 0644)
+	check(err)
 }
 
 func runUninstallCommand(depName string, fileName string) {
@@ -296,13 +364,13 @@ func printDeps(depsArray []string, goFileName string) {
 
 	for index, depName := range depsArray {
 		if index == (len(depsArray) - 1) {
-			if strings.Contains(depName, "github") {
+			if strings.Contains(depName, "github") || strings.Contains(depName, "gophr.dev") {
 				color.Green("└── " + depName + "\n")
 			} else {
 				fmt.Println("└── " + depName + "\n")
 			}
 		} else {
-			if strings.Contains(depName, "github") {
+			if strings.Contains(depName, "github") || strings.Contains(depName, "gophr.dev") {
 				color.Green("├─┬ " + depName)
 			} else {
 				fmt.Println("├─┬ " + depName)
