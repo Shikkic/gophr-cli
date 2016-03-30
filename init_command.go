@@ -28,6 +28,8 @@ func RunInitCommand(goPath string, repoAuthor string, projectName string) {
 				os.Exit(3)
 			}
 		}
+	} else {
+		// TODO throw error or gracefully exit
 	}
 
 	newFileBuffer := []byte(basicSkeleton)
