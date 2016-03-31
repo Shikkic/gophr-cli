@@ -3,24 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/briandowns/spinner"
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
-	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	//"reflect"
 	"strings"
-	"time"
 )
 
-// Define Constants
-// TODO move this to helper library
-// doesn't need to be constant
-const readBufferSize int = 7
-
-// TODO Consider breaking up each command into seperate go file
 func main() {
 	app := cli.NewApp()
 	app.Name = "gophr"
@@ -136,6 +126,7 @@ func main() {
 			Aliases: []string{"new"},
 			Usage:   "initialize new project",
 			Flags: []cli.Flag{
+				// TODO create lib flag to generate library
 				cli.StringFlag{
 					Name:  "lib",
 					Value: "library",
