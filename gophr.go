@@ -208,7 +208,7 @@ func runUninstallCommand(depName string, fileName string) {
 	depsArray := ParseDeps(fileName)
 
 	// If a dep does not exist in the import statemtn, if it does not exist then throw an error
-	if depExistsInList(depName, depsArray) == false {
+	if DepExistsInList(depName, depsArray) == false {
 		red := color.New(color.FgRed).SprintFunc()
 		magenta := color.New(color.FgMagenta).SprintFunc()
 		s.Stop()
@@ -244,7 +244,7 @@ func runUninstallCommand(depName string, fileName string) {
 	Check(err)
 
 	depsArray = ParseDeps(fileName)
-	if depExistsInList(depName, depsArray) == false {
+	if DepExistsInList(depName, depsArray) == false {
 		magenta := color.New(color.FgMagenta).SprintFunc()
 		s.Stop()
 		// TODO turn this check mark green
@@ -252,21 +252,6 @@ func runUninstallCommand(depName string, fileName string) {
 		os.Exit(3)
 	}
 }
-
-// Helper function
-func depExistsInList(depName string, depArray []string) bool {
-	for _, currDepName := range depArray {
-		if currDepName == depName {
-			return true
-		}
-	}
-
-	return false
-}
-
-/*
- Deps Command Functions
-*/
 
 // Returns an array of built dependency structs from an array of dep names.
 func buildDependencyStructs(depNames []string) {
