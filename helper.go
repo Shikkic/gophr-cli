@@ -6,14 +6,10 @@ import (
 	"strings"
 )
 
-func DepExistsInList(depName string, depArray []string) bool {
-	for _, currDepName := range depArray {
-		if currDepName == depName {
-			return true
-		}
-	}
-
-	return false
+// Define Dependency Struct
+type Dependency struct {
+	name, version string
+	installed     bool
 }
 
 // Parse Dependencies from a .go file
@@ -31,6 +27,26 @@ func ParseDeps(fileName string) []string {
 	}
 
 	return depsArray
+}
+
+func DepExistsInList(depName string, depArray []string) bool {
+	for _, currDepName := range depArray {
+		if currDepName == depName {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Returns an array of built dependency structs from an array of dep names.
+func buildDependencyStructs(depNames []string) {
+
+}
+
+// Return a map of dependencies that have the attributes installed or missing
+func validateDepIsInstalled(depName string) {
+
 }
 
 func Check(e error) {
