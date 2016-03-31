@@ -20,7 +20,7 @@ func RunInstallCommand(depName string, fileName string) {
 	// TODO instead use a flag to determine if it should install to all packages
 	if len(depName) == 0 {
 		fls, err := filepath.Glob("*.go")
-		check(err)
+		Check(err)
 
 		if len(fls) == 0 {
 			red := color.New(color.FgRed).SprintFunc()
@@ -39,25 +39,25 @@ func RunInstallCommand(depName string, fileName string) {
 		//var out bytes.Buffer
 		//cmd.Stdout = &out
 		err := cmd.Run()
-		check(err)
+		Check(err)
 	}
 
 	// Step 3 if command was successful, append to file
 	if len(fileName) > 0 {
 		// add to file
 		file, err := ioutil.ReadFile(fileName)
-		check(err)
+		Check(err)
 		augmentImportStatement(file, fileName, depName)
 	}
 
 	// Step 4 after adding it to import statement run go fmt on file
 	cmd := exec.Command("go", "fmt", fileName)
 	err := cmd.Run()
-	check(err)
+	Check(err)
 
 	// Check if exits in file
-	depsArray := parseDeps(fileName)
-	if depExistsInList(depName, depsArray) == true {
+	depsArray := ParseDeps(fileName)
+	if DepExistsInList(depName, depsArray) == true {
 		magenta := color.New(color.FgMagenta).SprintFunc()
 		s.Stop()
 		fmt.Printf("✓ %s was successfully installed into %s\n", magenta("'"+depName+"'"), magenta(fileName))
@@ -116,5 +116,5 @@ func augmentImportStatement(file []byte, fileName string, depName string) {
 	}
 
 	err := ioutil.WriteFile(fileName, newFileBuffer, 0644)
-	check(err)
+	Check(err)
 }
