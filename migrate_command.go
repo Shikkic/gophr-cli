@@ -56,5 +56,5 @@ func RunMigrateCommand(fileName string) {
 	}
 
 	err = ioutil.WriteFile("./"+fileName, newFileBuffer, 0644)
-	check(err)
+	Check(err)
 }
