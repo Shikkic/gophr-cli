@@ -7,8 +7,6 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	//"io"
-	"go/parser"
-	"go/token"
 	"io/ioutil"
 	"log"
 	"os"
@@ -21,6 +19,7 @@ import (
 
 // Define Constants
 // TODO move this to helper library
+// doesn't need to be constant
 const readBufferSize int = 7
 
 // TODO move this to helper library
@@ -44,11 +43,13 @@ func main() {
 				fileName := c.Args().First()
 				switch {
 				case len(fileName) != 0:
-					readFile(fileName)
+					// TODO Rename this
+					ReadFile(fileName)
 				default:
+					// TODO Rename this
 					fls, err := filepath.Glob("*.go")
-					check(err)
-					readFiles(fls)
+					Check(err)
+					ReadFiles(fls)
 				}
 			},
 		},
@@ -204,7 +205,7 @@ func main() {
 func runUninstallCommand(depName string, fileName string) {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Start()
-	depsArray := parseDeps(fileName)
+	depsArray := ParseDeps(fileName)
 
 	// If a dep does not exist in the import statemtn, if it does not exist then throw an error
 	if depExistsInList(depName, depsArray) == false {
@@ -240,9 +241,9 @@ func runUninstallCommand(depName string, fileName string) {
 	}
 
 	err = ioutil.WriteFile("./"+fileName, newFileBuffer, 0644)
-	check(err)
+	Check(err)
 
-	depsArray = parseDeps(fileName)
+	depsArray = ParseDeps(fileName)
 	if depExistsInList(depName, depsArray) == false {
 		magenta := color.New(color.FgMagenta).SprintFunc()
 		s.Stop()
@@ -252,6 +253,7 @@ func runUninstallCommand(depName string, fileName string) {
 	}
 }
 
+// Helper function
 func depExistsInList(depName string, depArray []string) bool {
 	for _, currDepName := range depArray {
 		if currDepName == depName {
@@ -266,78 +268,6 @@ func depExistsInList(depName string, depArray []string) bool {
  Deps Command Functions
 */
 
-// TODO consider renaming to more specific
-func readFiles(goFiles []string) {
-	if len(goFiles) == 0 {
-		path, err := os.Getwd()
-		check(err)
-		fmt.Println(path)
-		fmt.Println("└── (empty)\n")
-		os.Exit(3)
-	}
-
-	for _, goFile := range goFiles {
-		readFile(goFile)
-	}
-}
-
-func readFile(goFilePath string) {
-	depsArray := parseDeps(goFilePath)
-	// TODO Check to determine all github which packages are installed for
-	// use map to distinguish
-	printDeps(depsArray, goFilePath)
-}
-
-func printDeps(depsArray []string, goFileName string) {
-	fmt.Print("Go Dependecies for ")
-	color.Blue(goFileName)
-
-	for index, depName := range depsArray {
-		if index == (len(depsArray) - 1) {
-			if strings.Contains(depName, "github") || strings.Contains(depName, "gophr.dev") {
-				color.Green("└── " + depName + "\n")
-			} else {
-				fmt.Println("└── " + depName + "\n")
-			}
-		} else {
-			if strings.Contains(depName, "github") || strings.Contains(depName, "gophr.dev") {
-				color.Green("├─┬ " + depName)
-			} else {
-				fmt.Println("├─┬ " + depName)
-			}
-		}
-	}
-}
-
-func appendDepsToBuffer(buffer []byte, depName []byte) []byte {
-	for _, token := range depName {
-		buffer = append(buffer, token)
-	}
-
-	return buffer
-}
-
-/*
-Helper Functions
-*/
-
-// Parse Dependencies from a .go file
-func parseDeps(fileName string) []string {
-	fset := token.NewFileSet()
-
-	f, err := parser.ParseFile(fset, fileName, nil, parser.ImportsOnly)
-	check(err)
-
-	depsArray := make([]string, len(f.Imports))
-	for index, s := range f.Imports {
-		depName := strings.Replace(s.Path.Value, string('"'), " ", 2)
-		depName = strings.Replace(depName, " ", "", 10)
-		depsArray[index] = depName
-	}
-
-	return depsArray
-}
-
 // Returns an array of built dependency structs from an array of dep names.
 func buildDependencyStructs(depNames []string) {
 
@@ -346,10 +276,4 @@ func buildDependencyStructs(depNames []string) {
 // Return a map of dependencies that have the attributes installed or missing
 func validateDepIsInstalled(depName string) {
 
-}
-
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
 }
