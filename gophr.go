@@ -86,6 +86,7 @@ func main() {
 			Aliases: []string{"uninstall dep"},
 			Usage:   "Uninstall dependency",
 			Action: func(c *cli.Context) {
+				// TODO SHOULD INCLUDE BASH COMPLETION FOR CURRENT DEPENDENCIES IN FILE NAME
 				var depName string
 				var fileName string
 
@@ -118,7 +119,7 @@ func main() {
 					fileName = c.Args()[1]
 				}
 
-				runUninstallCommand(depName, fileName)
+				RunUninstallCommand(depName, fileName)
 			},
 		},
 		{

@@ -36,15 +36,12 @@ func RunInstallCommand(depName string, fileName string) {
 	// Step 2 run get command if
 	if strings.Contains(depName, "github.com") {
 		cmd := exec.Command("go", "get", depName)
-		//var out bytes.Buffer
-		//cmd.Stdout = &out
 		err := cmd.Run()
 		Check(err)
 	}
 
 	// Step 3 if command was successful, append to file
 	if len(fileName) > 0 {
-		// add to file
 		file, err := ioutil.ReadFile(fileName)
 		Check(err)
 		augmentImportStatement(file, fileName, depName)
@@ -63,8 +60,11 @@ func RunInstallCommand(depName string, fileName string) {
 		fmt.Printf("✓ %s was successfully installed into %s\n", magenta("'"+depName+"'"), magenta(fileName))
 		os.Exit(3)
 	} else {
-		//PANIC ITS NOT THERE
-		// TODO PANIC
+		red := color.New(color.FgRed).SprintFunc()
+		magenta := color.New(color.FgMagenta).SprintFunc()
+		s.Stop()
+		fmt.Printf("x %s failed to install %s\n", red("ERROR"), magenta("'"+depName+"'"))
+		os.Exit(3)
 	}
 
 	s.Stop()
