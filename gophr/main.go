@@ -14,9 +14,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/skeswa/gophr/common"
-
-	//"reflect"
-
 )
 
 func main() {
