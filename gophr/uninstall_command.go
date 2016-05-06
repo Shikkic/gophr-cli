@@ -3,12 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/briandowns/spinner"
-	"github.com/fatih/color"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
+
+	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
 )
 
 func RunUninstallCommand(depName string, fileName string) {
@@ -45,7 +46,7 @@ func RunUninstallCommand(depName string, fileName string) {
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
+	if err = scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
 

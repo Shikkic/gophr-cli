@@ -4,6 +4,8 @@ import (
 	"go/parser"
 	"go/token"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 // Define Dependency Struct
@@ -13,6 +15,7 @@ type Dependency struct {
 }
 
 // Parse Dependencies from a .go file
+// TODO consider returning if the file name does not exist
 func ParseDeps(fileName string) []string {
 	fset := token.NewFileSet()
 
@@ -39,18 +42,35 @@ func DepExistsInList(depName string, depArray []string) bool {
 	return false
 }
 
-// Returns an array of built dependency structs from an array of dep names.
-func buildDependencyStructs(depNames []string) {
-
-}
-
-// Return a map of dependencies that have the attributes installed or missing
-func validateDepIsInstalled(depName string) {
-
-}
-
 func Check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+/*
+/////////////////////////////
+//	 Text Color Functions  //
+/////////////////////////////
+# Use these color functions with printf() to make stdout colored
+*/
+
+func Magenta(text string) string {
+	magenta := color.New(color.FgMagenta).SprintFunc()
+	return magenta(text)
+}
+
+func Red(text string) string {
+	red := color.New(color.FgRed).SprintFunc()
+	return red(text)
+}
+
+func Green(text string) string {
+	green := color.New(color.FgGreen).SprintFunc()
+	return green(text)
+}
+
+func Blue(text string) string {
+	blue := color.New(color.FgBlue).SprintFunc()
+	return blue(text)
 }

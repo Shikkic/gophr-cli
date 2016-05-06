@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/fatih/color"
 	"os"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 // TODO consider renaming to more specific
@@ -13,7 +14,8 @@ func ReadFiles(goFiles []string) {
 		path, err := os.Getwd()
 		Check(err)
 		fmt.Println(path)
-		fmt.Println("└── (empty)\n")
+		fmt.Println("└── (empty)")
+		fmt.Println("")
 		os.Exit(3)
 	}
 

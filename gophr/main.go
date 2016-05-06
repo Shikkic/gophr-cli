@@ -3,20 +3,16 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"os"
-	"path/filepath"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/shikkic/gophr-cli/gophr/common"
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/skeswa/gophr/common"
-
-	//"reflect"
-
 )
 
 func main() {
@@ -37,7 +33,7 @@ func main() {
 					os.Exit(3)
 				}
 
-				// abstract this into gophr request lib
+				// TODO abstract this into gophr request lib #fetchSearchQuery()
 				res, err := http.Get("http://gophr.dev/api/search?q=" + searchQueryArg)
 				data, err := ioutil.ReadAll(res.Body)
 				magenta := color.New(color.FgMagenta).SprintFunc()
@@ -205,9 +201,15 @@ func main() {
 			},
 		},
 		{
-			Name:    "migrate",
+			Name:    "lock",
 			Aliases: []string{"convert"},
-			Usage:   "Migrate go package to use gophr.pm/<REPO_NAME>",
+			Usage:   "lock a file(s) github go packages to use gophr.pm/<REPO_NAME>",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "latest",
+					Usage: "lock all github go package dependencies to latest master SHA",
+				},
+			},
 			Action: func(c *cli.Context) {
 				var fileName string
 
@@ -221,7 +223,7 @@ func main() {
 					fileName = c.Args().First()
 				}
 
-				RunMigrateCommand(fileName)
+				RunLockCommand(fileName, c)
 			},
 		},
 	}
