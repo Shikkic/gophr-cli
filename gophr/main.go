@@ -3,16 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/codegangsta/cli"
-	"github.com/fatih/color"
-	"github.com/pquerna/ffjson/ffjson"
-	"github.com/skeswa/gophr/common"
 )
 
 func main() {
@@ -22,37 +17,35 @@ func main() {
 	app.Commands = []cli.Command{
 		{
 			Name:    "search",
-			Aliases: []string{"d"},
-			Usage:   "Search gophr dependency",
+			Aliases: []string{"s"},
+			Usage:   "Search go packages on gophr.pm",
 			Action: func(c *cli.Context) {
+				spinner := InitSpinner()
+				spinner.Start()
 				searchQueryArg := c.Args().First()
 
-				// Check for searchQueryArg
+				// TODO create validation and error handling helper
 				if len(searchQueryArg) == 0 {
 					fmt.Println("ERROR no query argument given")
-					os.Exit(3)
+					os.Exit(1)
 				}
 
-				// TODO abstract this into gophr request lib #fetchSearchQuery()
-				res, err := http.Get("http://gophr.dev/api/search?q=" + searchQueryArg)
-				data, err := ioutil.ReadAll(res.Body)
-				magenta := color.New(color.FgMagenta).SprintFunc()
+				searchResultsData, err := FetchSearchResultsData(searchQueryArg)
 
 				if err != nil {
 					fmt.Println(err)
-					os.Exit(3)
+					os.Exit(1)
 				}
 
-				var packageModels []common.PackageDTO
-				err = ffjson.Unmarshal(data, &packageModels)
-				Check(err)
+				searchResultsPackages, err := BuildPackageModelsFromRequestData(searchResultsData)
 
-				// abstract this into print search packagePrint
-				for _, packageModel := range packageModels {
-					fmt.Printf("%s \n", magenta(packageModel.Author+"/"+packageModel.Repo))
-					fmt.Println("3123 Downloads")
-					fmt.Println(packageModel.Description + "\n")
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
 				}
+
+				spinner.Stop()
+				PrintSearchResultPackageModels(searchResultsPackages)
 			},
 		},
 		{
@@ -91,20 +84,16 @@ func main() {
 				// TODO Consider using -a or --all flag to re-install all dependencies
 				if c.NArg() == 0 {
 					// TODO move these into functions
-					red := color.New(color.FgRed).SprintFunc()
-					magenta := color.New(color.FgMagenta).SprintFunc()
-					fmt.Printf("%s gophr %s %s not run with a package name\n", red("✗"), red("ERROR"), magenta("install"))
-					fmt.Printf("run %s for more help\n", magenta("gophr install -h"))
+					fmt.Printf("%s gophr %s %s not run with a package name\n", Red("✗"), Red("ERROR"), Magenta("install"))
+					fmt.Printf("run %s for more help\n", Magenta("gophr install -h"))
 					os.Exit(3)
 				}
 
 				// TODO check if type string with reflect!
 				if c.NArg() < 2 {
 					// TODO move these into functions
-					red := color.New(color.FgRed).SprintFunc()
-					magenta := color.New(color.FgMagenta).SprintFunc()
-					fmt.Printf("%s gophr %s %s not run with a file name\n", red("✗"), red("ERROR"), magenta("install"))
-					fmt.Printf("run %s for more help\n", magenta("gophr install -h"))
+					fmt.Printf("%s gophr %s %s not run with a file name\n", Red("✗"), Red("ERROR"), Magenta("install"))
+					fmt.Printf("run %s for more help\n", Magenta("gophr install -h"))
 					os.Exit(3)
 				}
 
@@ -132,20 +121,16 @@ func main() {
 				// TODO Consider using -a or --all flag to re-install all dependencies
 				if c.NArg() == 0 {
 					// TODO move these into functions
-					red := color.New(color.FgRed).SprintFunc()
-					magenta := color.New(color.FgMagenta).SprintFunc()
-					fmt.Printf("%s gophr %s %s not run with a package name\n", red("✗"), red("ERROR"), magenta("uninstall"))
-					fmt.Printf("run %s for more help\n", magenta("gophr uninstall -h"))
+					fmt.Printf("%s gophr %s %s not run with a package name\n", Red("✗"), Red("ERROR"), Magenta("uninstall"))
+					fmt.Printf("run %s for more help\n", Magenta("gophr uninstall -h"))
 					os.Exit(3)
 				}
 
 				// TODO check if type string with reflect
 				if c.NArg() < 2 {
 					// TODO move these into functions
-					red := color.New(color.FgRed).SprintFunc()
-					magenta := color.New(color.FgMagenta).SprintFunc()
-					fmt.Printf("%s gophr %s %s not run with a file name\n", red("✗"), red("ERROR"), magenta("uninstall"))
-					fmt.Printf("run %s for more help\n", magenta("gophr uninstall -h"))
+					fmt.Printf("%s gophr %s %s not run with a file name\n", Red("✗"), Red("ERROR"), Magenta("uninstall"))
+					fmt.Printf("run %s for more help\n", Magenta("gophr uninstall -h"))
 					os.Exit(3)
 				}
 
@@ -180,9 +165,8 @@ func main() {
 				// First check if GOPATH is set, err if not
 				goPath := os.Getenv("GOPATH")
 				if len(goPath) < 0 {
-					red := color.New(color.FgRed).SprintFunc()
-					magenta := color.New(color.FgMagenta).SprintFunc()
-					fmt.Printf("%s gophr %s %s $GOPATH not set\n", red("✗"), red("ERROR"), magenta("init"))
+
+					fmt.Printf("%s gophr %s %s $GOPATH not set\n", Red("✗"), Red("ERROR"), Magenta("init"))
 					os.Exit(3)
 				}
 
