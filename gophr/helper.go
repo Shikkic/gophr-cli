@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/skeswa/gophr/common"
@@ -91,13 +93,17 @@ func PrintEmptySearchResults() {
 
 func BuildPackageModelsFromRequestData(packageModelData []byte) ([]common.PackageDTO, error) {
 	var packageModels []common.PackageDTO
-	err := ffjson.Unmarshal(packageModelData, packageModels)
+	err := ffjson.Unmarshal(packageModelData, &packageModels)
 	if err != nil {
 		// return error with error code
 		return nil, err
 	}
 
 	return packageModels, nil
+}
+
+func InitSpinner() *spinner.Spinner {
+	return spinner.New(spinner.CharSets[14], 100*time.Millisecond)
 }
 
 /*
