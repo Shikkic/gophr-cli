@@ -23,27 +23,11 @@ func main() {
 				spinner := InitSpinner()
 				spinner.Start()
 				searchQueryArg := c.Args().First()
-
-				// TODO create validation and error handling helper
-				if len(searchQueryArg) == 0 {
-					fmt.Println("ERROR no query argument given")
-					os.Exit(1)
-				}
-
+				validateSearchQueryArg(searchQueryArg)
 				searchResultsData, err := FetchSearchResultsData(searchQueryArg)
-
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-
+				Check(err)
 				searchResultsPackages, err := BuildPackageModelsFromRequestData(searchResultsData)
-
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-
+				Check(err)
 				spinner.Stop()
 				PrintSearchResultPackageModels(searchResultsPackages)
 			},
@@ -51,7 +35,7 @@ func main() {
 		{
 			Name:    "deps",
 			Aliases: []string{"d"},
-			Usage:   "List dependencies of a go file or folder",
+			Usage:   "List go packages of a specified go file or folder",
 			Action: func(c *cli.Context) {
 				fileNameArg := c.Args().First()
 				switch {
