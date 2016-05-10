@@ -19,18 +19,7 @@ func main() {
 			Name:    "search",
 			Aliases: []string{"s"},
 			Usage:   "Search go packages on gophr.pm",
-			Action: func(c *cli.Context) {
-				spinner := InitSpinner()
-				spinner.Start()
-				searchQueryArg := c.Args().First()
-				validateSearchQueryArg(searchQueryArg)
-				searchResultsData, err := FetchSearchResultsData(searchQueryArg)
-				Check(err)
-				searchResultsPackages, err := BuildPackageModelsFromRequestData(searchResultsData)
-				Check(err)
-				spinner.Stop()
-				PrintSearchResultPackageModels(searchResultsPackages)
-			},
+			Action:  RunSearchCommand,
 		},
 		{
 			Name:    "deps",
