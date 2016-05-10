@@ -6,10 +6,19 @@ import (
 	"github.com/codegangsta/cli"
 )
 
+var DEV_MODE bool
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "gophr"
 	app.Usage = "An end-to-end package management solution for Go"
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:        "dev",
+			Usage:       "enable developer mode on commands",
+			Destination: &DEV_MODE,
+		},
+	}
 	app.Commands = []cli.Command{
 		{
 			Name:    "search",
