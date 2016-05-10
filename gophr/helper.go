@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"strings"
@@ -12,14 +13,8 @@ import (
 	"github.com/skeswa/gophr/common"
 )
 
-// Define Dependency Struct
-type Dependency struct {
-	name, version string
-	installed     bool
-}
-
 // Parse Dependencies from a .go file
-// TODO consider returning if the file name does not exist
+// TODO need to refactor the depricated usage of this, can't remove just yet
 func ParseDeps(fileName string) []string {
 	fset := token.NewFileSet()
 
@@ -34,6 +29,17 @@ func ParseDeps(fileName string) []string {
 	}
 
 	return depsArray
+}
+
+func ParseDepURLsFromFile(file *ast.File) []string {
+	fileDepURLs := make([]string, len(file.Imports))
+	for index, s := range file.Imports {
+		depName := strings.Replace(s.Path.Value, string('"'), " ", 2)
+		depName = strings.Replace(depName, " ", "", 10)
+		fileDepURLs[index] = depName
+	}
+
+	return fileDepURLs
 }
 
 func DepExistsInList(depName string, depArray []string) bool {
@@ -84,4 +90,9 @@ func Green(text string) string {
 func Blue(text string) string {
 	blue := color.New(color.FgBlue).SprintFunc()
 	return blue(text)
+}
+
+func Yellow(text string) string {
+	yellow := color.New(color.FgYellow).SprintFunc()
+	return yellow(text)
 }
