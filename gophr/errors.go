@@ -5,14 +5,6 @@ import (
 	"os"
 )
 
-func validateSearchQueryArg(searchQuery string) {
-	if len(searchQuery) == 0 {
-		newError := NewInvalidArgumentError("Search Query", searchQuery, 1)
-		newError.PrintErrorAndExit()
-		os.Exit(1)
-	}
-}
-
 // TODO need to look up error codes and print message
 func Check(e error) {
 	if e != nil {
@@ -57,5 +49,5 @@ func (err InvalidArgumentError) String() string {
 
 func (err InvalidArgumentError) PrintErrorAndExit() {
 	fmt.Println(err.Error())
-	os.Exit(1)
+	os.Exit(err.ErrorCode)
 }
