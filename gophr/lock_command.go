@@ -80,7 +80,7 @@ func RunLockCommand(c *cli.Context) {
 	Check(err)
 
 	// Print out new packages for go file(s)
-	ReadFile(fileName)
+	PrintDepsFromFileName(fileName)
 }
 
 func replaceVersionedPackages(file io.Reader, fileName string, versionedPackages [][]byte) {
