@@ -1,11 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
-	"net/http"
 	"strings"
 	"time"
 
@@ -47,41 +44,6 @@ func DepExistsInList(depName string, depArray []string) bool {
 	}
 
 	return false
-}
-
-func FetchSearchResultsData(searchQuery string) ([]byte, error) {
-	request, err := http.Get("http://gophr.dev/api/search?q=" + searchQuery)
-	if err != nil {
-		// TODO
-		// return an error code
-		return nil, err
-	}
-	requestData, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		// TODO
-		// return an error code
-		return nil, err
-	}
-
-	return requestData, nil
-}
-
-func PrintSearchResultPackageModels(packageModels []common.PackageDTO) {
-	if len(packageModels) == 0 {
-		PrintEmptySearchResults()
-		return
-	}
-
-	for _, packageModel := range packageModels {
-		fmt.Printf("%s \n", Magenta(packageModel.Author+"/"+packageModel.Repo))
-		// TODO fetch the real download numbers
-		fmt.Println("3123 Downloads")
-		fmt.Println(packageModel.Description + "\n")
-	}
-}
-
-func PrintEmptySearchResults() {
-	fmt.Println("No results found with that query")
 }
 
 func BuildPackageModelsFromRequestData(packageModelData []byte) ([]common.PackageDTO, error) {
