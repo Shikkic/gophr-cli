@@ -18,7 +18,20 @@ import (
 	"github.com/skeswa/gophr/common"
 )
 
-func RunLockCommand(fileName string, c *cli.Context) {
+// TODO COMPLETE REFACTOR OF RUN LOCK COMMAND
+func RunLockCommand(c *cli.Context) {
+	var fileName string
+
+	// TODO consider tabbing for arg if not present
+	if c.NArg() == 0 {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("File Name: ")
+		fileNameInput, _ := reader.ReadString('\n')
+		fileName = strings.Replace(fileNameInput, string('\n'), "", 1)
+	} else {
+		fileName = c.Args().First()
+	}
+
 	// Identify the file actually exists
 	file, err := os.Open("./" + fileName)
 	if err != nil {

@@ -12,12 +12,41 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/skeswa/gophr/common"
 )
 
-func RunInstallCommand(depName string, fileName string) {
+func RunInstallCommand(c *cli.Context) {
+	var depName string
+	var fileName string
+
+	// TODO Consider using -a or --all flag to re-install all dependencies
+	if c.NArg() == 0 {
+		// TODO move these into functions
+		fmt.Printf("%s gophr %s %s not run with a package name\n", Red("✗"), Red("ERROR"), Magenta("install"))
+		fmt.Printf("run %s for more help\n", Magenta("gophr install -h"))
+		os.Exit(3)
+	}
+
+	// TODO check if type string with reflect!
+	if c.NArg() < 2 {
+		// TODO move these into functions
+		fmt.Printf("%s gophr %s %s not run with a file name\n", Red("✗"), Red("ERROR"), Magenta("install"))
+		fmt.Printf("run %s for more help\n", Magenta("gophr install -h"))
+		os.Exit(3)
+	}
+
+	if c.NArg() > 0 {
+		depName = c.Args()[0]
+	}
+
+	// TODO consider tabbing for arg if not present
+	if c.NArg() > 1 {
+		fileName = c.Args()[1]
+	}
+
 	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
 	s.Start()
 	// Step 1 Determine if we need to download and install dependencies of the folder or for specified dependency

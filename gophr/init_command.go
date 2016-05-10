@@ -1,16 +1,43 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"github.com/fatih/color"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/codegangsta/cli"
+	"github.com/fatih/color"
 )
 
 const basicSkeleton string = "package main\n\nimport (\n\t\"fmt\"\n)\n\nfunc main () {\n\tfmt.Println(\"hello world!\")\n}"
 
-func RunInitCommand(goPath string, repoAuthor string, projectName string) {
+// TODO TOTAL REFACTOR
+func RunInitCommand(c *cli.Context) {
+	var repoAuthor string
+	var projectName string
+
+	// First check if GOPATH is set, err if not
+	goPath := os.Getenv("GOPATH")
+	if len(goPath) < 0 {
+
+		fmt.Printf("%s gophr %s %s $GOPATH not set\n", Red("✗"), Red("ERROR"), Magenta("init"))
+		os.Exit(3)
+	}
+
+	// TODO consider tabbing for arg if not present
+	if c.NArg() == 0 {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Repo Author: ")
+		repoAuthorInput, _ := reader.ReadString('\n')
+		repoAuthor = strings.Replace(repoAuthorInput, string('\n'), "", 1)
+		fmt.Print("Project Name: ")
+		projectNameInput, _ := reader.ReadString('\n')
+		projectName = strings.Replace(projectNameInput, string('\n'), "", 1)
+	}
+
 	initPath := filepath.Join(goPath, "src", "github.com", repoAuthor, projectName)
 	os.MkdirAll(initPath, 0777)
 

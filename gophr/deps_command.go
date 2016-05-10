@@ -3,10 +3,26 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 )
+
+func RunDepsCommand(c *cli.Context) {
+	fileNameArg := c.Args().First()
+	switch {
+	case len(fileNameArg) != 0:
+		// TODO Rename this
+		ReadFile(fileNameArg)
+	default:
+		fls, err := filepath.Glob("*.go")
+		Check(err)
+		// TODO Rename this
+		ReadFiles(fls)
+	}
+}
 
 // TODO consider renaming to more specific
 func ReadFiles(goFiles []string) {
