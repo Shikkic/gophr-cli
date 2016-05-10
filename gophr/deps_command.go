@@ -32,8 +32,7 @@ func ReadFile(goFilePath string) {
 }
 
 func printDeps(depsArray []string, goFileName string) {
-	fmt.Print("Go Dependecies for ")
-	color.Blue(goFileName)
+	fmt.Printf("Go Dependecies for %s", Blue(goFileName))
 
 	for index, depName := range depsArray {
 		if index == (len(depsArray) - 1) {
