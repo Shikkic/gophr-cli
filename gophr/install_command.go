@@ -196,3 +196,11 @@ func augmentImportStatement(file []byte, fileName string, depName string) {
 	err := ioutil.WriteFile(fileName, newFileBuffer, 0644)
 	Check(err)
 }
+
+func appendDepsToBuffer(buffer []byte, depName []byte) []byte {
+	for _, token := range depName {
+		buffer = append(buffer, token)
+	}
+
+	return buffer
+}
