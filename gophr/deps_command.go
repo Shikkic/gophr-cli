@@ -70,6 +70,7 @@ func PrintDepsFromFileName(fileName string) error {
 	return nil
 }
 
+// TODO need to clean this up still
 func PrintFileDepURLsAndFileName(depsArray []string, goFileName string) {
 	fmt.Printf("\n%s\n", Blue(goFileName))
 
