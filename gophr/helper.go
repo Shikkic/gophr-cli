@@ -13,6 +13,11 @@ import (
 	"github.com/skeswa/gophr/common"
 )
 
+const (
+	gophrDevURL = "http://gophr.dev"
+	gophrURL    = "http://gophr.pm"
+)
+
 // Parse Dependencies from a .go file
 // TODO need to refactor the depricated usage of this, can't remove just yet
 func ParseDeps(fileName string) []string {
@@ -65,6 +70,13 @@ func BuildPackageModelsFromRequestData(packageModelData []byte) ([]common.Packag
 
 func InitSpinner() *spinner.Spinner {
 	return spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+}
+
+func GetGophrBaseURL() string {
+	if DEV_MODE == true {
+		return gophrDevURL
+	}
+	return gophrURL
 }
 
 /*
