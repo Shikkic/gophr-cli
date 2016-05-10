@@ -2,64 +2,91 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"path/filepath"
 	"strings"
 
 	"github.com/codegangsta/cli"
-	"github.com/fatih/color"
 )
 
-func RunDepsCommand(c *cli.Context) {
+func RunDepsCommand(c *cli.Context) error {
 	fileNameArg := c.Args().First()
-	switch {
-	case len(fileNameArg) != 0:
-		// TODO Rename this
-		ReadFile(fileNameArg)
-	default:
-		fls, err := filepath.Glob("*.go")
-		Check(err)
-		// TODO Rename this
-		ReadFiles(fls)
-	}
-}
 
-// TODO consider renaming to more specific
-func ReadFiles(goFiles []string) {
-	if len(goFiles) == 0 {
-		path, err := os.Getwd()
-		Check(err)
-		fmt.Println(path)
-		fmt.Println("└── (empty)")
-		fmt.Println("")
-		os.Exit(3)
+	if FileNameArgIsEmpty(fileNameArg) {
+		err := PrintDepsFromCurrentDirectory()
+		return err
 	}
 
-	for _, goFile := range goFiles {
-		ReadFile(goFile)
+	err := PrintDepsFromFileName(fileNameArg)
+	Check(err)
+	return nil
+}
+
+// DepsCommand Helpers
+func FileNameArgIsEmpty(fileNameArg string) bool {
+	if len(fileNameArg) == 0 {
+		return true
 	}
+
+	return false
 }
 
-func ReadFile(goFilePath string) {
-	depsArray := ParseDeps(goFilePath)
-	// TODO Check to determine all github which packages are installed for
-	// use map to distinguish
-	printDeps(depsArray, goFilePath)
+// TODO finishing building this
+func validateFileNameIsValid(fileNameArg string) error {
+	// need to return special error here
+	return nil
 }
 
-func printDeps(depsArray []string, goFileName string) {
-	fmt.Printf("Go Dependecies for %s", Blue(goFileName))
+func PrintDepsFromCurrentDirectory() error {
+	goFilesInCurrentDir, err := filepath.Glob("./*.go")
+	if err != nil {
+		return err
+	}
+
+	for _, goFile := range goFilesInCurrentDir {
+		err := PrintDepsFromFileName(goFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func PrintDepsFromFileName(fileName string) error {
+	err := validateFileNameIsValid(fileName)
+	Check(err)
+
+	file, err := OpenASTFilePointerFromFileName(fileName)
+	if err != nil {
+		return err
+	}
+
+	fileDepURLs := ParseDepURLsFromFile(file)
+	PrintFileDepURLsAndFileName(fileDepURLs, fileName)
+
+	return nil
+}
+
+func PrintFileDepURLsAndFileName(depsArray []string, goFileName string) {
+	fmt.Printf("\n%s\n", Blue(goFileName))
 
 	for index, depName := range depsArray {
 		if index == (len(depsArray) - 1) {
+			// TODO create get function for gophr domain
 			if strings.Contains(depName, "github") || strings.Contains(depName, "gophr.dev") {
-				color.Green("└── " + depName + "\n")
+				fmt.Printf("└── ⚠ %s\n\n", Yellow(depName))
 			} else {
-				fmt.Println("└── " + depName + "\n")
+				fmt.Printf("└── %s\n", depName)
 			}
 		} else {
+			// TODO create get function for gophr domain
 			if strings.Contains(depName, "github") || strings.Contains(depName, "gophr.dev") {
-				color.Green("├─┬ " + depName)
+				fmt.Printf("├─┬ ⚠ %s\n", Yellow(depName))
+			} else if strings.Contains(depName, "gophr.dev") {
+				fmt.Printf("├─┬ ✓%s\n", Green(depName))
 			} else {
 				fmt.Println("├─┬ " + depName)
 			}
@@ -67,10 +94,9 @@ func printDeps(depsArray []string, goFileName string) {
 	}
 }
 
-func appendDepsToBuffer(buffer []byte, depName []byte) []byte {
-	for _, token := range depName {
-		buffer = append(buffer, token)
-	}
+func OpenASTFilePointerFromFileName(fileName string) (*ast.File, error) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, fileName, nil, parser.ImportsOnly)
 
-	return buffer
+	return f, err
 }
