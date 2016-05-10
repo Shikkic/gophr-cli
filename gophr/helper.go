@@ -49,13 +49,6 @@ func DepExistsInList(depName string, depArray []string) bool {
 	return false
 }
 
-// TODO need to look up error codes and print message
-func Check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 func FetchSearchResultsData(searchQuery string) ([]byte, error) {
 	request, err := http.Get("http://gophr.dev/api/search?q=" + searchQuery)
 	if err != nil {
