@@ -80,7 +80,7 @@ func PrintFileDepURLsAndFileName(depsArray []string, goFileName string) {
 			if strings.Contains(depName, "github") || strings.Contains(depName, "gophr.dev") {
 				fmt.Printf("└── ⚠ %s\n\n", Yellow(depName))
 			} else {
-				fmt.Printf("└── %s\n", depName)
+				fmt.Printf("└── %s\n\n", depName)
 			}
 		} else {
 			// TODO create get function for gophr domain
