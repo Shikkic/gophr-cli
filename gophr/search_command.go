@@ -1,38 +1,54 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 
 	"github.com/codegangsta/cli"
 	"github.com/skeswa/gophr/common"
 )
 
-func RunSearchCommand(c *cli.Context) {
+func RunSearchCommand(c *cli.Context) error {
 	spinner := InitSpinner()
 	spinner.Start()
+
 	searchQueryArg := c.Args().First()
-	validateSearchQueryArg(searchQueryArg)
+	err := validateSearchQueryArg(searchQueryArg)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 	searchResultsData, err := FetchSearchResultsData(searchQueryArg)
-	Check(err)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 	searchResultsPackages, err := BuildPackageModelsFromRequestData(searchResultsData)
-	Check(err)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
 	spinner.Stop()
 	PrintSearchResultPackageModels(searchResultsPackages)
+
+	return nil
 }
 
-func validateSearchQueryArg(searchQuery string) {
+func validateSearchQueryArg(searchQuery string) error {
 	if len(searchQuery) == 0 {
-		newError := NewInvalidArgumentError("Search Query", searchQuery, 1)
-		newError.PrintErrorAndExit()
-		os.Exit(1)
+		InvalidArgumentError := NewInvalidArgumentError("Search Query", searchQuery, 1)
+		return errors.New(InvalidArgumentError.Error())
 	}
+
+	return nil
 }
 
 func FetchSearchResultsData(searchQuery string) ([]byte, error) {
-	request, err := http.Get("http://gophr.dev/api/search?q=" + searchQuery)
+	requestURL := GetGophrBaseURL() + "/api/search?q=" + searchQuery
+	request, err := http.Get(requestURL)
 	if err != nil {
 		// TODO
 		// return an error code
