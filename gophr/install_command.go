@@ -7,148 +7,214 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/briandowns/spinner"
 	"github.com/codegangsta/cli"
-	"github.com/fatih/color"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/skeswa/gophr/common"
 )
 
-func RunInstallCommand(c *cli.Context) {
-	var depName string
-	var fileName string
-
-	// TODO Consider using -a or --all flag to re-install all dependencies
-	if c.NArg() == 0 {
-		// TODO move these into functions
-		fmt.Printf("%s gophr %s %s not run with a package name\n", Red("✗"), Red("ERROR"), Magenta("install"))
-		fmt.Printf("run %s for more help\n", Magenta("gophr install -h"))
-		os.Exit(3)
+func RunInstallCommand(c *cli.Context) error {
+	depName, err := getFirstArgDepName(c)
+	if err != nil {
+		return err
 	}
 
-	// TODO check if type string with reflect!
-	if c.NArg() < 2 {
-		// TODO move these into functions
-		fmt.Printf("%s gophr %s %s not run with a file name\n", Red("✗"), Red("ERROR"), Magenta("install"))
-		fmt.Printf("run %s for more help\n", Magenta("gophr install -h"))
-		os.Exit(3)
+	fileName, err := getSecondArgFileName(c)
+	if err != nil {
+		return err
 	}
 
-	if c.NArg() > 0 {
-		depName = c.Args()[0]
+	depVersion, err := getDepVersionFromUser(depName)
+	depGophrURL := BuildVersionedGophrDepURL(depName, depVersion)
+	err = RunGoGetDep(depGophrURL)
+	if err != nil {
+		// TODO special error here
+		return err
 	}
 
-	// TODO consider tabbing for arg if not present
-	if c.NArg() > 1 {
-		fileName = c.Args()[1]
+	file, err := ioutil.ReadFile(fileName)
+	Check(err)
+	augmentGoFileImportStatement(file, fileName, depName)
+	err = RunGoFMTOnFileName(fileName)
+	if err != nil {
+		return err
 	}
 
-	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
-	s.Start()
-	// Step 1 Determine if we need to download and install dependencies of the folder or for specified dependency
-	// TODO instead use a flag to determine if it should install to all packages
-	if len(depName) == 0 {
-		fls, err := filepath.Glob("*.go")
-		Check(err)
-
-		if len(fls) == 0 {
-			red := color.New(color.FgRed).SprintFunc()
-			magenta := color.New(color.FgMagenta).SprintFunc()
-			s.Stop()
-			fmt.Printf("gophr %s %s not run in go a package\n", red("ERROR"), magenta("install"))
-			os.Exit(3)
-		}
-
-		depName = "./"
+	err = ValidateDepWasInstalledIntoFileName(depName, fileName)
+	if err != nil {
+		return err
 	}
 
-	// Do you want
-	magenta := color.New(color.FgMagenta).SprintFunc()
-	s.Stop()
-	fmt.Printf("gophr %s version lock %s\n", magenta("INSTALL"), magenta(depName))
+	return nil
+}
+
+// TODO deps_helper
+func BuildVersionedGophrDepURL(depName string, depVersion string) string {
+	url := GetGophrBaseURL() + "depName" + "@" + "depVersion"
+	return url
+}
+
+// TODO move this to HELPER
+func RunGoGetDep(depURL string) error {
+	cmd := exec.Command("go", "get", "--insecure", depURL)
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// TODO move this to HELPER
+func RunGoFMTOnFileName(fileName string) error {
+	cmd := exec.Command("go", "fmt", fileName)
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// TODO move this to deps_helper
+func ValidateDepWasInstalledIntoFileName(depName string, fileName string) error {
+	file, err := OpenASTFilePointerFromFileName(fileName)
+	if err != nil {
+		return nil
+	}
+
+	depURLs := ParseDepURLsFromFile(file)
+	// TODO seperate this into seperate function
+	if DepExistsInList(depName, depURLs) == true {
+		fmt.Printf("✓ %s was successfully installed into %s\n", Magenta("'"+depName+"'"), Magenta(fileName))
+		return nil
+	} else {
+		// TODO CREATE NEW UNIQUE ERROR HERE
+		fmt.Printf("x %s failed to install %s\n", Red("ERROR"), Magenta("'"+depName+"'"))
+		return nil
+	}
+}
+
+func getDepVersionFromUser(depName string) (string, error) {
+	depVersion, err := promptUserForDepVersion(depName)
+	if err != nil {
+		return "", err
+	}
+
+	return depVersion, nil
+}
+
+// TODO move this to generic helper file
+func GetUserInput() string {
+	bufferReader := bufio.NewReader(os.Stdin)
+	userInput, _ := bufferReader.ReadString('\n')
+	userInput = strings.Replace(userInput, string('\n'), "", 2)
+
+	return userInput
+}
+
+// TODO move this to deps_helper
+func FetchVersionsForDep(depName string) []common.VersionDTO {
+	requestURL := GetGophrBaseURL() + "/api" + depName + "/versions"
+	request, err := http.Get(requestURL)
+	Check(err)
+	data, err := ioutil.ReadAll(request.Body)
+	Check(err)
+	var things []common.VersionDTO
+	err = ffjson.Unmarshal(data, &things)
+	Check(err)
+
+	return things
+}
+
+// TODO move this to deps_helper
+func FetchLatestVersionForDep(depName string) common.VersionDTO {
+	fmt.Println("No version branches detected, fetching master branch SHA")
+	res, err := http.Get("http://gophr.dev/api/" + depName + "/versions/latest")
+	data, err := ioutil.ReadAll(res.Body)
+	var latestVersion common.VersionDTO
+	err = ffjson.Unmarshal(data, &latestVersion)
+	Check(err)
+
+	return latestVersion
+}
+
+func promptUserForDepVersion(depName string) (string, error) {
+	// TODO create function
+	fmt.Printf("gophr %s version lock %s\n", Magenta("INSTALL"), Magenta(depName))
 	fmt.Println("y/n?")
-	reader := bufio.NewReader(os.Stdin)
+	versionLockDep := GetUserInput()
 
-	input, _ := reader.ReadString('\n')
-	versionLock := strings.Replace(input, string('\n'), "", 2)
-
-	s.Start()
 	var depVersion string
-	if versionLock == "y" || versionLock == "yes" {
-		// Print known versions
-		res, err := http.Get("http://gophr.dev/api/" + depName + "/versions")
-		Check(err)
-		data, err := ioutil.ReadAll(res.Body)
-		Check(err)
-		s.Stop()
-		var things []common.VersionDTO
-		err = ffjson.Unmarshal(data, &things)
-		Check(err)
-		if len(things) == 0 {
-			fmt.Println("No version branches detected, fetching master branch SHA")
-			s.Start()
-			res, err := http.Get("http://gophr.dev/api/" + depName + "/versions/latest")
-			data, err := ioutil.ReadAll(res.Body)
-			var latestVersion common.VersionDTO
-			err = ffjson.Unmarshal(data, &latestVersion)
-			Check(err)
-			s.Stop()
+	if versionLockDep == "y" || versionLockDep == "yes" {
+		depVersions := FetchVersionsForDep(depName)
+
+		if len(depVersions) == 0 {
+			latestVersion := FetchLatestVersionForDep(depName)
 			fmt.Println("Master branch SHA: " + latestVersion.Value)
-			depVersion = "@" + latestVersion.Value
+			depVersion = latestVersion.Value
 		} else {
 			// TODO ask if you want latest hash?
 			fmt.Println("Known versions: ")
-			for _, lol := range things {
-				fmt.Println(lol.Value)
+			for _, depVersion := range depVersions {
+				fmt.Println(depVersion.Value)
 			}
-			reader := bufio.NewReader(os.Stdin)
-			input, _ := reader.ReadString('\n')
-			depVersion = "@" + strings.Replace(input, string('\n'), "", 2)
+			depVersion = GetUserInput()
 			// TODO verify version is one of the ones that exists
 		}
-	}
-
-	s.Start()
-	depName = "gophr.dev/" + depName + depVersion
-	cmd := exec.Command("go", "get", "--insecure", depName)
-	err := cmd.Run()
-	Check(err)
-
-	// Step 3 if command was successful, append to file
-	if len(fileName) > 0 {
-		file, errz := ioutil.ReadFile(fileName)
-		Check(errz)
-		augmentImportStatement(file, fileName, depName)
-	}
-
-	// Step 4 after adding it to import statement run go fmt on file
-	cmd = exec.Command("go", "fmt", fileName)
-	err = cmd.Run()
-	Check(err)
-
-	// Check if exits in file
-	depsArray := ParseDeps(fileName)
-	if DepExistsInList(depName, depsArray) == true {
-		magenta := color.New(color.FgMagenta).SprintFunc()
-		s.Stop()
-		fmt.Printf("✓ %s was successfully installed into %s\n", magenta("'"+depName+"'"), magenta(fileName))
-		os.Exit(3)
 	} else {
-		red := color.New(color.FgRed).SprintFunc()
-		magenta := color.New(color.FgMagenta).SprintFunc()
-		s.Stop()
-		fmt.Printf("x %s failed to install %s\n", red("ERROR"), magenta("'"+depName+"'"))
-		os.Exit(3)
+		return "", nil
 	}
 
-	s.Stop()
+	return depVersion, nil
 }
 
-func augmentImportStatement(file []byte, fileName string, depName string) {
+func getFirstArgDepName(c *cli.Context) (string, error) {
+	err := validateFirstArgDepNameExists(c)
+	if err != nil {
+		return "", err
+	}
+	depName := c.Args()[0]
+
+	return depName, nil
+}
+
+func validateFirstArgDepNameExists(c *cli.Context) error {
+	if c.NArg() == 0 {
+		// TODO create new error type for this
+		fmt.Printf("%s gophr %s %s not run with a package name\n", Red("✗"), Red("ERROR"), Magenta("install"))
+		fmt.Printf("run %s for more help\n", Magenta("gophr install -h"))
+		return nil
+	}
+
+	return nil
+}
+
+func getSecondArgFileName(c *cli.Context) (string, error) {
+	err := validateSecondArgFileNameExists(c)
+	if err != nil {
+		return "", err
+	}
+	fileName := c.Args()[1]
+
+	// TODO validate that the files is indeed a go file and can be opened
+
+	return fileName, nil
+}
+
+func validateSecondArgFileNameExists(c *cli.Context) error {
+	if c.NArg() < 2 {
+		// TODO create new error type for sthis
+		fmt.Printf("%s gophr %s %s not run with a file name\n", Red("✗"), Red("ERROR"), Magenta("install"))
+		fmt.Printf("run %s for more help\n", Magenta("gophr install -h"))
+		return nil
+	}
+
+	return nil
+}
+
+func augmentGoFileImportStatement(file []byte, fileName string, depName string) {
 	formatedDepName := []byte("\n\t" + string('"') + depName + string('"'))
 	importStringbuffer := make([]string, 7)
 	newFileBuffer := make([]byte, 0)
