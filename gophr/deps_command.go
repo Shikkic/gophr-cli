@@ -79,15 +79,17 @@ func PrintFileDepURLsAndFileName(depsArray []string, goFileName string) {
 			// TODO create get function for gophr domain
 			if strings.Contains(depName, "github") || strings.Contains(depName, "gophr.dev") {
 				fmt.Printf("└── ⚠ %s\n\n", Yellow(depName))
+			} else if strings.Contains(depName, "gophr.dev") {
+				fmt.Printf("└── %s\n", Green(depName))
 			} else {
 				fmt.Printf("└── %s\n\n", depName)
 			}
 		} else {
 			// TODO create get function for gophr domain
-			if strings.Contains(depName, "github") || strings.Contains(depName, "gophr.dev") {
+			if strings.Contains(depName, "github") {
 				fmt.Printf("├─┬ ⚠ %s\n", Yellow(depName))
 			} else if strings.Contains(depName, "gophr.dev") {
-				fmt.Printf("├─┬ ✓%s\n", Green(depName))
+				fmt.Printf("├─┬ %s\n", Green(depName))
 			} else {
 				fmt.Println("├─┬ " + depName)
 			}
