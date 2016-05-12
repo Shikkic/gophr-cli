@@ -24,7 +24,7 @@ If not setup instructions can be found [here]()
 Installation and setup instructions can be found [here](https://github.com/skeswa/gophr)
 
 
-### Installation Gophr Development 
+### Compiling Gophr-cli from source
 
 Clone the repo:
 ```
