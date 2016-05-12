@@ -1,6 +1,6 @@
 # gophr-cli
 
-Gophr-cli is the cli tool for the [Gophr](https://github.com/skeswa/gophr) end-to-end package management solution for Go.
+:package: Gophr-cli is the cli tool for the [Gophr](https://github.com/skeswa/gophr) end-to-end package management solution for Go.
 
 ### Prerequisites
 - Must have [go](https://golang.org/) installed
