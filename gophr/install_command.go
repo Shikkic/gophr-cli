@@ -35,7 +35,7 @@ func RunInstallCommand(c *cli.Context) error {
 
 	file, err := ioutil.ReadFile(fileName)
 	Check(err)
-	augmentGoFileImportStatement(file, fileName, depName)
+	augmentGoFileImportStatement(file, fileName, depGophrURL)
 	err = RunGoFMTOnFileName(fileName)
 	if err != nil {
 		return err
