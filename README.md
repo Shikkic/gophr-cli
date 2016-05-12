@@ -20,7 +20,7 @@ Run to find out if your go has been properly setup:
 ```
 If not setup instructions can be found [here]()
 
-- [Gophr] dev environmnet MUST be running
+- [Gophr](https://github.com/skeswa/gophr) dev environmnet MUST be running
 Installation and setup instructions can be found [here](https://github.com/skeswa/gophr)
 
 
@@ -45,3 +45,7 @@ You should not be able to call `gophr` like so:
 ```
 $ gophr
 ```
+
+### Developer Mode
+
+Gophr-cli's default mode is production, but as of (05/12/2016) there is no PROD server that can handle requests. You **MUST** use the `--dev` flag on all commands or they will not work
