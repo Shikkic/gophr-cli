@@ -32,12 +32,12 @@ $ git clone git@github.com:Shikkic/gophr-cli.git
 ```
 
 Navigate to the $GOPHR_REPO:
-```
-$ cd $GOPHR_REPO
+```sh
+$ cd $GOPHR_REPO/gophr
 ```
 
 Build and install the go files:
-```
+```sh
 $ go build && go install
 ```
 
