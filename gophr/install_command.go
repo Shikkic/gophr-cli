@@ -27,6 +27,7 @@ func RunInstallCommand(c *cli.Context) error {
 
 	depVersion, err := getDepVersionFromUser(depName)
 	depGophrURL := BuildVersionedGophrDepURL(depName, depVersion)
+	fmt.Println("installing " + depGophrURL)
 	err = RunGoGetDep(depGophrURL)
 	if err != nil {
 		// TODO special error here
@@ -41,7 +42,7 @@ func RunInstallCommand(c *cli.Context) error {
 		return err
 	}
 
-	err = ValidateDepWasInstalledIntoFileName(depName, fileName)
+	err = ValidateDepWasInstalledIntoFileName(depGophrURL, fileName)
 	if err != nil {
 		return err
 	}
@@ -51,8 +52,11 @@ func RunInstallCommand(c *cli.Context) error {
 
 // TODO deps_helper
 func BuildVersionedGophrDepURL(depName string, depVersion string) string {
-	url := GetGophrBaseURL() + "depName" + "@" + "depVersion"
-	return url
+	if len(depVersion) == 0 {
+		return "gophr.dev/" + depName
+	}
+
+	return "gophr.dev/" + depName + "@" + depVersion
 }
 
 // TODO move this to HELPER
@@ -60,6 +64,7 @@ func RunGoGetDep(depURL string) error {
 	cmd := exec.Command("go", "get", "--insecure", depURL)
 	err := cmd.Run()
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
@@ -115,8 +120,9 @@ func GetUserInput() string {
 }
 
 // TODO move this to deps_helper
+// TODO NEEDS TO RETURN ERROR
 func FetchVersionsForDep(depName string) []common.VersionDTO {
-	requestURL := GetGophrBaseURL() + "/api" + depName + "/versions"
+	requestURL := GetGophrBaseURL() + "/api/" + depName + "/versions"
 	request, err := http.Get(requestURL)
 	Check(err)
 	data, err := ioutil.ReadAll(request.Body)
