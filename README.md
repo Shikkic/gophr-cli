@@ -43,9 +43,9 @@ $ go build && go install
 
 You should not be able to call `gophr` like so:
 ```
-$ gophr
+$ gophr --help
 ```
 
 ### Developer Mode
 
-Gophr-cli's default mode is production, but as of (05/12/2016) there is no PROD server that can handle requests. You **MUST** use the `--dev` flag on all commands or they will not work
+Gophr-cli's default mode is production, but as of (05/12/2016) there is no PROD server that can handle requests. You **MUST** be running a `gophr` dev serve, and you must use the `--dev` flag on all commands or they will not work
