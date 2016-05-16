@@ -6,8 +6,8 @@
 - Must have [go](https://golang.org/) installed
 
 Run to find out if you have go installed:
-```
-
+```sh
+$ go && echo "Go is installed"
 ```
 If not installation instructions can be found [here](https://golang.org/dl/)
 
@@ -15,8 +15,8 @@ If not installation instructions can be found [here](https://golang.org/dl/)
   - `$GOBIN` and `$GOPATH` must exist in your `$PATH` env
 
 Run to find out if your go has been properly setup:
-```
-
+```sh
+$ echo $GOBIN && echo $GOPATH && echo "Go is properly setup"
 ```
 If not setup instructions can be found [here]()
 
