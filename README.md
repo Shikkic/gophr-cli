@@ -46,6 +46,31 @@ You should not be able to call `gophr` like so:
 $ gophr --help
 ```
 
+```
+NAME:
+   gophr - An end-to-end package management solution for Go
+
+USAGE:
+   gophr [global options] command [command options] [arguments...]
+
+VERSION:
+   0.0.0
+
+COMMANDS:
+    search	Search go packages on gophr.pm
+    deps	List go packages of a specified go file or folder
+    install	Install dependency
+    uninstall	Uninstall dependency
+    init	initialize new project
+    lock	Lock a file(s) github go packages to use gophr.pm/<REPO_NAME>
+    sub		lololol
+
+GLOBAL OPTIONS:
+   --dev		enable developer mode on commands
+   --help, -h		show help
+   --version, -v	print the version
+```
+
 ### Developer Mode
 
 Gophr-cli's default mode is production, but as of (05/12/2016) there is no PROD server that can handle requests. You **MUST** be running a `gophr` dev serve, and you must use the `--dev` flag on all commands or they will not work
