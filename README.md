@@ -2,6 +2,31 @@
 
 :package: Gophr-cli is the cli tool for the [Gophr](https://github.com/skeswa/gophr) end-to-end package management solution for Go.
 
+```
+NAME:
+   gophr - An end-to-end package management solution for Go
+
+USAGE:
+   gophr [global options] command [command options] [arguments...]
+
+VERSION:
+   0.0.0
+
+COMMANDS:
+    search	Search go packages on gophr.pm
+    deps	List go packages of a specified go file or folder
+    install	Install dependency
+    uninstall	Uninstall dependency
+    init	initialize new project
+    lock	Lock a file(s) github go packages to use gophr.pm/<REPO_NAME>
+    sub		lololol
+
+GLOBAL OPTIONS:
+   --dev		enable developer mode on commands
+   --help, -h		show help
+   --version, -v	print the version
+```
+
 ### Prerequisites
 - Must have [go](https://golang.org/) installed
 
@@ -44,31 +69,6 @@ $ go build && go install
 You should not be able to call `gophr` like so:
 ```
 $ gophr --help
-```
-
-```
-NAME:
-   gophr - An end-to-end package management solution for Go
-
-USAGE:
-   gophr [global options] command [command options] [arguments...]
-
-VERSION:
-   0.0.0
-
-COMMANDS:
-    search	Search go packages on gophr.pm
-    deps	List go packages of a specified go file or folder
-    install	Install dependency
-    uninstall	Uninstall dependency
-    init	initialize new project
-    lock	Lock a file(s) github go packages to use gophr.pm/<REPO_NAME>
-    sub		lololol
-
-GLOBAL OPTIONS:
-   --dev		enable developer mode on commands
-   --help, -h		show help
-   --version, -v	print the version
 ```
 
 ### Developer Mode
