@@ -19,7 +19,6 @@ COMMANDS:
     uninstall	Uninstall dependency
     init	initialize new project
     lock	Lock a file(s) github go packages to use gophr.pm/<REPO_NAME>
-    sub		lololol
 
 GLOBAL OPTIONS:
    --dev		enable developer mode on commands
