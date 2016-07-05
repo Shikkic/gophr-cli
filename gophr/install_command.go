@@ -220,6 +220,7 @@ func validateSecondArgFileNameExists(c *cli.Context) error {
 	return nil
 }
 
+// TODO This is legacy code that needs to be refactored still
 func augmentGoFileImportStatement(file []byte, fileName string, depName string) {
 	formatedDepName := []byte("\n\t" + string('"') + depName + string('"'))
 	importStringbuffer := make([]string, 7)
@@ -269,6 +270,7 @@ func augmentGoFileImportStatement(file []byte, fileName string, depName string) 
 	Check(err)
 }
 
+// TODO This is legacy code that needs to be refactored still
 func appendDepsToBuffer(buffer []byte, depName []byte) []byte {
 	for _, token := range depName {
 		buffer = append(buffer, token)

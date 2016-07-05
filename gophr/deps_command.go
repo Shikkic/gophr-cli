@@ -20,8 +20,7 @@ func RunDepsCommand(c *cli.Context) error {
 	}
 
 	err := PrintDepsFromFileName(fileNameArg)
-	Check(err)
-	return nil
+	return err
 }
 
 // DepsCommand Helpers
@@ -45,6 +44,11 @@ func PrintDepsFromCurrentDirectory() error {
 		return err
 	}
 
+	if len(goFilesInCurrentDir) == 0 {
+		printEmptyDir()
+		return nil
+	}
+
 	for _, goFile := range goFilesInCurrentDir {
 		err := PrintDepsFromFileName(goFile)
 		if err != nil {
@@ -61,6 +65,7 @@ func PrintDepsFromFileName(fileName string) error {
 
 	file, err := OpenASTFilePointerFromFileName(fileName)
 	if err != nil {
+		printEmptyDir()
 		return err
 	}
 
@@ -102,4 +107,8 @@ func OpenASTFilePointerFromFileName(fileName string) (*ast.File, error) {
 	f, err := parser.ParseFile(fset, fileName, nil, parser.ImportsOnly)
 
 	return f, err
+}
+
+func printEmptyDir() {
+	fmt.Println("└── (empty)\n")
 }
