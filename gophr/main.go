@@ -77,6 +77,12 @@ func main() {
 			},
 			Action: RunLockCommand,
 		},
+		{
+			Name:    "sub",
+			Aliases: []string{"t"},
+			Usage:   "TEST: This is a test command for the subversion process that will runing during a lock command",
+			Action:  RunSubVersioningCommand,
+		},
 	}
 	app.Run(os.Args)
 }

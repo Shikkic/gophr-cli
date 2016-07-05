@@ -20,6 +20,8 @@ import (
 
 // TODO COMPLETE REFACTOR OF RUN LOCK COMMAND
 func RunLockCommand(c *cli.Context) {
+	fmt.Println(c)
+	os.Exit(3)
 	var fileName string
 
 	// TODO consider tabbing for arg if not present
@@ -42,7 +44,7 @@ func RunLockCommand(c *cli.Context) {
 	defer file.Close()
 
 	// Retreive a list of dependencies in file
-	fmt.Printf("Looing for unversioned packages in %s\n\n", Blue(fileName))
+	fmt.Printf("Looking for unversioned packages in %s\n\n", Blue(fileName))
 	packageNames := ParseDeps(fileName)
 	githubPackageURLs := filterPackageURLsForGithubURLs(packageNames)
 
