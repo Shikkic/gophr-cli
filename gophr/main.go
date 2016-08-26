@@ -54,7 +54,7 @@ func main() {
 		{
 			Name:    "init",
 			Aliases: []string{"new"},
-			Usage:   "initialize new project",
+			Usage:   "Initialize new project",
 			Flags: []cli.Flag{
 				// TODO create lib flag to generate library
 				cli.StringFlag{
